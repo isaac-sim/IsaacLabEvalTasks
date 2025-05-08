@@ -1,0 +1,3 @@
+[submodule "submodules/Isaac-GR00T"]
+	path = submodules/Isaac-GR00T
+	url = git@github.com:NVIDIA/Isaac-GR00T.git
