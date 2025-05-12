@@ -26,16 +26,17 @@ import torch
 import unittest
 
 import carb
-import omni.usd
+
 # Omniverse logger
 import omni.log
+import omni.usd
 
 from isaaclab.envs import ManagerBasedRLEnvCfg
 from isaaclab.envs.utils.spaces import sample_space
+from isaaclab_tasks.utils.parse_cfg import parse_env_cfg
 
 # Import extensions to set up environment tasks
 import isaaclab_eval_tasks.tasks  # noqa: F401
-from isaaclab_tasks.utils.parse_cfg import parse_env_cfg
 
 
 class TestEnvironments(unittest.TestCase):

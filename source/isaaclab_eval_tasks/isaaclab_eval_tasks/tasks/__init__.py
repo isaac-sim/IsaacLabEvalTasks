@@ -1,26 +1,22 @@
 """Package containing task implementations for various robotic environments."""
 
+import gymnasium as gym
 import os
 import toml
-import gymnasium as gym
 
 from isaaclab_tasks.utils import import_packages
+
+from .manipulation.pick_place import exhaustpipe_gr1t2_closedloop_env_cfg, nutpour_gr1t2_closedloop_env_cfg
 
 ##
 # Register Gym environments.
 ##
 
-from .manipulation.pick_place import (
-    nutpour_gr1t2_closedloop_env_cfg,
-    exhaustpipe_gr1t2_closedloop_env_cfg,
-)
 
 gym.register(
     id="Isaac-ExhaustPipe-GR1T2-ClosedLoop-v0",
     entry_point="isaaclab.envs:ManagerBasedRLEnv",
-    kwargs={
-        "env_cfg_entry_point": exhaustpipe_gr1t2_closedloop_env_cfg.ExhaustPipeGR1T2ClosedLoopEnvCfg
-    },
+    kwargs={"env_cfg_entry_point": exhaustpipe_gr1t2_closedloop_env_cfg.ExhaustPipeGR1T2ClosedLoopEnvCfg},
     disable_env_checker=True,
 )
 
