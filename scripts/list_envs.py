@@ -20,7 +20,7 @@ import gymnasium as gym
 from prettytable import PrettyTable
 
 # Import extensions to set up environment tasks
-import ext_template.tasks  # noqa: F401
+import isaaclab_eval_tasks.tasks  # noqa: F401
 
 
 def main():
@@ -35,9 +35,11 @@ def main():
 
     # count of environments
     index = 0
+    print(len(gym.registry.values()))
     # acquire all Isaac environments names
     for task_spec in gym.registry.values():
-        if "Template-" in task_spec.id:
+        print(task_spec.id)
+        if "ClosedLoop-" in task_spec.id:
             # add details to table
             table.add_row([index + 1, task_spec.id, task_spec.entry_point, task_spec.kwargs["env_cfg_entry_point"]])
             # increment count
