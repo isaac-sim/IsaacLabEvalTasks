@@ -1,4 +1,4 @@
-"""Installation script for the 'ext_template' python package."""
+"""Installation script for the 'isaaclab_eval_tasks' python package."""
 
 import os
 import toml
@@ -18,8 +18,8 @@ INSTALL_REQUIRES = [
 
 # Installation operation
 setup(
-    name="ext_template",
-    packages=["ext_template"],
+    name="isaaclab_eval_tasks",
+    packages=["isaaclab_eval_tasks"],
     author=EXTENSION_TOML_DATA["package"]["author"],
     maintainer=EXTENSION_TOML_DATA["package"]["maintainer"],
     url=EXTENSION_TOML_DATA["package"]["repository"],
@@ -27,12 +27,12 @@ setup(
     description=EXTENSION_TOML_DATA["package"]["description"],
     keywords=EXTENSION_TOML_DATA["package"]["keywords"],
     install_requires=INSTALL_REQUIRES,
-    license="MIT",
+    license="Apache-2.0",
     include_package_data=True,
     python_requires=">=3.10",
     classifiers=[
         "Natural Language :: English",
-        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Isaac Sim :: 2023.1.1",
         "Isaac Sim :: 4.0.0",
     ],
