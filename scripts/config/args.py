@@ -13,73 +13,141 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
 from pathlib import Path
-
+import shutil
+from typing import Optional
 
 class EvalTaskConfig(Enum):
     NUTPOURING = (
         "Isaac-NutPour-GR1T2-ClosedLoop-v0",
-        # "/home/gr00t/GR00T-N1-2B-tuned-Nut-Pouring-task",
-        "/mnt/datab/gr00t-mimic/ckpts/nut_nbke_vpd_v34_1k_5demo_gr1_3e-3_bs96_20ksteps_8gpus_h100-1/master/checkpoint-20000",
-        "Pick up the beaker and tilt it to pour out 1 metallic nut into the bowl. Pick up the bowl and place it on the metallic measuring scale."
+        "/home/gr00t/GR00T-N1-2B-tuned-Nut-Pouring-task",
+        "Pick up the beaker and tilt it to pour out 1 metallic nut into the bowl. Pick up the bowl and place it on the metallic measuring scale.",
+        "nut_pouring_task.hdf5"
     )
-    PIPE_SORTING = (
+    PIPESORTING = (
         "Isaac-ExhaustPipe-GR1T2-ClosedLoop-v0",
         "/home/gr00t/GR00T-N1-2B-tuned-Exhaust-Pipe-Sorting-task",
-        "Pickup the blue pipe and place it into the blue bin."
+        "Pick up the blue pipe and place it into the blue bin.",
+        "exhaust_pipe_sorting_task.hdf5"
     )
 
-    def __init__(self, task, model_path, language_instruction):
+    def __init__(self, task: str, model_path: str, language_instruction: str, hdf5_name: str):
         self.task = task
         self.model_path = model_path
         self.language_instruction = language_instruction
-
+        self.hdf5_name = hdf5_name
 
 @dataclass
 class Gr00tN1ClosedLoopArguments():
-    record_images: bool = True
-    record_videos: bool = True
-    num_envs: int = 10
-    background_env_usd_path: Optional[str] = None
-    record_camera_output_path: Optional[str] = None
-    enable_pinocchio: bool = True
+    # Simulation specific parameters
+    headless: bool = field(
+        default=False,
+        metadata={"description": "Whether to run the simulator in headless (no GUI) mode."}
+    )
+    num_envs: int = field(
+        default=10,
+        metadata={"description": "Number of environments to run in parallel."}
+    )
+    enable_pinocchio: bool = field(
+        default=True,
+        metadata={"description": "Whether to use Pinocchio for physics simulation. Required for NutPouring and ExhaustPipe tasks."}
+    )
 
     # model specific parameters
-    task_name: str = "nutpouring"
-    task: str = ""
-    language_instruction: str = ""
-    model_path: str = ""
-    embodiment_tag: str = "gr1"
-    action_horizon: int = 16
-    denoising_steps: int = 4
-
-    data_config: str = "gr1_arms_only"
-    original_image_size: tuple[int, int, int] = (160, 256, 3)
-    target_image_size: tuple[int, int, int] = (256, 256, 3)
-    gr00t_joints_config_path: Path = Path(__file__).parent.resolve() / "gr00t" / "gr00t_joint_space.yaml"
+    task_name: str = field(
+        default="nutpouring",
+        metadata={"description": "Short name of the task to run (e.g., nutpouring, exhaustpipe)."}
+    )
+    task: str = field(
+        default="",
+        metadata={"description": "Full task name for the gym-registered environment."}
+    )
+    language_instruction: str = field(
+        default="",
+        metadata={"description": "Instruction given to the policy in natural language."}
+    )
+    model_path: str = field(
+        default="",
+        metadata={"description": "Path to the tuned model checkpoint directory."}
+    )
+    action_horizon: int = field(
+        default=16,
+        metadata={"description": "Number of actions in the policy's predictionhorizon."}
+    )
+    embodiment_tag: str = field(
+        default="gr1",
+        metadata={"description": "Identifier for the robot embodiment used in the policy inference (e.g., 'gr1' or 'new_embodiment')."}
+    )
+    denoising_steps: int = field(
+        default=4,
+        metadata={"description": "Number of denoising steps used in the policy inference."}
+    )
+    data_config: str = field(
+        default="gr1_arms_only",
+        metadata={"description": "Name of the data configuration to use for the policy."}
+    )
+    original_image_size: tuple[int, int, int] = field(
+        default=(160, 256, 3),
+        metadata={"description": "Original size of input images as (height, width, channels)."}
+    )
+    target_image_size: tuple[int, int, int] = field(
+        default=(256, 256, 3),
+        metadata={"description": "Target size for images after resizing and padding as (height, width, channels)."}
+    )
+    gr00t_joints_config_path: Path = field(
+        default=Path(__file__).parent.resolve() / "gr00t" / "gr00t_joint_space.yaml",
+        metadata={"description": "Path to the YAML file specifying the joint ordering configuration for GR00T policy."}
+    )
 
     # robot (GR1) simulation specific parameters
-    action_joints_config_path: Path = Path(__file__).parent.resolve() / "gr1" / "action_joint_space.yaml"
-    state_joints_config_path: Path = Path(__file__).parent.resolve() / "gr1" / "state_joint_space.yaml"
+    action_joints_config_path: Path = field(
+        default=Path(__file__).parent.resolve() / "gr1" / "action_joint_space.yaml",
+        metadata={"description": "Path to the YAML file specifying the joint ordering configuration for GR1 action space in Lab."}
+    )
+    state_joints_config_path: Path = field(
+        default=Path(__file__).parent.resolve() / "gr1" / "state_joint_space.yaml",
+        metadata={"description": "Path to the YAML file specifying the joint ordering configuration for GR1 state space in Lab."}
+    )
 
     # Default to GPU policy and CPU physics simulation
-    policy_device: str = "cuda"
-    simulation_device: str = "cpu"
+    policy_device: str = field(
+        default="cuda",
+        metadata={"description": "Device to run the policy model on (e.g., 'cuda' or 'cpu')."}
+    )
+    simulation_device: str = field(
+        default="cpu",
+        metadata={"description": "Device to run the physics simulation on (e.g., 'cpu' or 'cuda')."}
+    )
 
     # Evaluation parameters
-    max_num_rollouts: int = 100
-    checkpoint_name: str = "gr00t-n1-2b-tuned"
-    eval_file_path: Optional[str] = f'/tmp/{checkpoint_name}-{task_name}.json'
+    max_num_rollouts: int = field(
+        default=100,
+        metadata={"description": "Maximum number of rollouts to perform during evaluation."}
+    )
+    checkpoint_name: str = field(
+        default="gr00t-n1-2b-tuned",
+        metadata={"description": "Name of the model checkpoint used for evaluation."}
+    )
+    eval_file_path: Optional[str] = field(
+        default=None,
+        metadata={"description": "Path to the file where evaluation results will be saved."}
+    )
 
-    # Simulator specific parameters
-    headless: bool = False
-    # could be less than action_horizon
-    num_feedback_actions: int = 16
-    rollout_length: int = 30
-    seed: int = 10
+    # Closed loop specific parameters
+    num_feedback_actions: int = field(
+        default=16,
+        metadata={"description": "Number of feedback actions to execute per rollout (can be less than action_horizon)."}
+    )
+    rollout_length: int = field(
+        default=30,
+        metadata={"description": "Number of steps in each rollout episode."}
+    )
+    seed: int = field(
+        default=10,
+        metadata={"description": "Random seed for reproducibility."}
+    )
 
     def __post_init__(self):
         # Populate fields from enum based on task_name
@@ -112,3 +180,142 @@ class Gr00tN1ClosedLoopArguments():
         assert self.embodiment_tag in ["gr1", "new_embodiment"], (
             "embodiment_tag must be one of the following: " + ", ".join(["gr1", "new_embodiment"])
         )
+
+
+@dataclass
+class Gr00tN1DatasetConfig():
+    # Datasets & task specific parameters
+    data_root: Path = field(
+        default=Path("/mnt/datab/PhysicalAI-GR00T-Tuned-Tasks"),
+        metadata={"description": "Root directory for all data storage."}
+    )
+    task_name: str = field(
+        default="nutpouring",
+        metadata={"description": "Short name of the task to run (e.g., nutpouring, exhaustpipe)."}
+    )
+    language_instruction: str = field(
+        default="",
+        metadata={"description": "Instruction given to the policy in natural language."}
+    )
+    hdf5_name: str = field(
+        default="",
+        metadata={"description": "Name of the HDF5 file to use for the dataset."}
+    )
+    task_index: int = field(
+        default=0,
+        metadata={"description": "Index of the task in the task list. Do not use 1. (E.g. 0 for nutpouring, 2 for exhaustpipe)."}
+    )
+    # Parquet
+    chunks_size: int = field(
+        default=1000,
+        metadata={"description": "Number of episodes per data chunk."}
+    )
+    # mp4 video
+    fps: int = field(
+        default=20,
+        metadata={"description": "Frames per second for video recording."}
+    )
+    # Metadata files
+    data_path: str = field(
+        default="data/chunk-{episode_chunk:03d}/episode_{episode_index:06d}.parquet",
+        metadata={"description": "Template path for storing episode data files."}
+    )
+    video_path: str = field(
+        default="videos/chunk-{episode_chunk:03d}/{video_key}/episode_{episode_index:06d}.mp4",
+        metadata={"description": "Template path for storing episode video files."}
+    )
+    modality_template_path: Path = field(
+        default=Path(__file__).parent.resolve() / "gr00t" / "modality.json",
+        metadata={"description": "Path to the modality template JSON file."}
+    )
+    modality_fname: str = field(
+        default="modality.json",
+        metadata={"description": "Filename for the modality JSON file."}
+    )
+    episodes_fname: str = field(
+        default="episodes.jsonl",
+        metadata={"description": "Filename for the episodes JSONL file."}
+    )
+    tasks_fname: str = field(
+        default="tasks.jsonl",
+        metadata={"description": "Filename for the tasks JSONL file."}
+    )
+    info_template_path: Path = field(
+        default=Path(__file__).parent.resolve() / "gr00t" / "info.json",
+        metadata={"description": "Path to the info template JSON file."}
+    )
+    info_fname: str = field(
+        default="info.json",
+        metadata={"description": "Filename for the info JSON file."}
+    )
+    # GR00T policy specific parameters
+    gr00t_joints_config_path: Path = field(
+        default=Path(__file__).parent.resolve() / "gr00t" / "gr00t_joint_space.yaml",
+        metadata={"description": "Path to the YAML file specifying the joint ordering configuration for GR00T policy."}
+    )
+    robot_type: str = field(
+        default="gr1_arms_only",
+        metadata={"description": "Type of robot embodiment used in the policy fine-tuning."}
+    )
+    # robot (GR1) simulation specific parameters
+    action_joints_config_path: Path = field(
+        default=Path(__file__).parent.resolve() / "gr1" / "action_joint_space.yaml",
+        metadata={"description": "Path to the YAML file specifying the joint ordering configuration for GR1 action space in Lab."}
+    )
+    state_joints_config_path: Path = field(
+        default=Path(__file__).parent.resolve() / "gr1" / "state_joint_space.yaml",
+        metadata={"description": "Path to the YAML file specifying the joint ordering configuration for GR1 state space in Lab."}
+    )
+    original_image_size: tuple[int, int, int] = field(
+        default=(160, 256, 3),
+        metadata={"description": "Original size of input images as (height, width, channels)."}
+    )
+    target_image_size: tuple[int, int, int] = field(
+        default=(256, 256, 3),
+        metadata={"description": "Target size for images after resizing and padding."}
+    )
+
+    hdf5_file_path: Path = field(init=False)
+    lerobot_data_dir: Path = field(init=False)
+
+    def __post_init__(self):
+        # Reserve task_index 1 for the validity check field
+        assert self.task_index != 1, "task_index must not be 1. (Use 0 for nutpouring, 2 for exhaustpipe, etc.)"
+
+        # Populate fields from enum based on task_name
+        if self.task_name.upper() not in EvalTaskConfig.__members__:
+            raise ValueError(
+                f"task_name must be one of: {', '.join(EvalTaskConfig.__members__.keys())}"
+            )
+        config = EvalTaskConfig[self.task_name.upper()]
+        self.language_instruction = config.language_instruction
+        self.hdf5_name = config.hdf5_name
+
+        self.hdf5_file_path = self.data_root / self.hdf5_name
+        self.lerobot_data_dir = self.data_root / self.hdf5_name.replace(".hdf5", "") / "lerobot"
+
+        # Assert all paths exist
+        assert self.hdf5_file_path.exists(), (
+            "hdf5_file_path does not exist"
+        )
+        assert Path(self.gr00t_joints_config_path).exists(), (
+            "gr00t_joints_config_path does not exist"
+        )
+        assert Path(self.action_joints_config_path).exists(), (
+            "action_joints_config_path does not exist"
+        )
+        assert Path(self.state_joints_config_path).exists(), (
+            "state_joints_config_path does not exist"
+        )
+        assert Path(self.info_template_path).exists(), (
+            "info_template_path does not exist"
+        )
+        assert Path(self.modality_template_path).exists(), (
+            "modality_template_path does not exist"
+        )
+        # if lerobot_data_dir not empty, throw a warning and remove
+        if self.lerobot_data_dir.exists():
+            print(f"Warning: lerobot_data_dir {self.lerobot_data_dir} already exists. Removing it.")
+            # remove directory contents and the directory itself using shutil
+            shutil.rmtree(self.lerobot_data_dir)
+
