@@ -17,12 +17,13 @@ from pathlib import Path
 class EvalTaskConfig(Enum):
     NUTPOURING = (
         "Isaac-NutPour-GR1T2-ClosedLoop-v0",
+        # "/home/gr00t/GR00T-N1-2B-tuned-Nut-Pouring-task",
         "/mnt/datab/gr00t-mimic/ckpts/nut_nbke_vpd_v34_1k_5demo_gr1_3e-3_bs96_20ksteps_8gpus_h100-1/master/checkpoint-20000",
         "Pick up the beaker and tilt it to pour out 1 metallic nut into the bowl. Pick up the bowl and place it on the metallic measuring scale."
     )
     PIPE_SORTING = (
         "Isaac-ExhaustPipe-GR1T2-ClosedLoop-v0",
-        "/mnt/datab/gr00t-mimic/ckpts/pipe_nobke_vpd_v10_1k_5dem_gr1_3e-3_bs96_20ksteps_8gpus_h100-2/master/checkpoint-20000",
+        "/home/gr00t/GR00T-N1-2B-tuned-Exhaust-Pipe-Sorting-task",
         "Pickup the blue pipe and place it into the blue bin."
     )
 
@@ -36,7 +37,7 @@ class EvalTaskConfig(Enum):
 class Gr00tN1ClosedLoopArguments():
     record_images: bool = True
     record_videos: bool = True
-    num_envs: int = 2
+    num_envs: int = 10
     background_env_usd_path: Optional[str] = None
     record_camera_output_path: Optional[str] = None
     enable_pinocchio: bool = True
@@ -64,9 +65,9 @@ class Gr00tN1ClosedLoopArguments():
     simulation_device: str = "cpu"
 
     # Evaluation parameters
-    max_num_rollouts: int = 2
-    checkpoint_name: str = "gr00t-n1"
-    eval_file_path: Optional[str] = f'/tmp/{checkpoint_name}-{task}.json'
+    max_num_rollouts: int = 100
+    checkpoint_name: str = "gr00t-n1-2b-tuned"
+    eval_file_path: Optional[str] = f'/tmp/{checkpoint_name}-{task_name}.json'
 
     # Simulator specific parameters
     headless: bool = False

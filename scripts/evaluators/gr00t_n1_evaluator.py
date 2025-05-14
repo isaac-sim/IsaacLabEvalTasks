@@ -29,7 +29,7 @@ class Gr00tN1Evaluator(EvaluatorBase):
         self.num_rollouts = 0
 
     def evaluate_step(self, env: gym.Env, succeess_term: DoneTerm) -> None:
-        success_term_val = succeess_term.func(env.unwrapped, **succeess_term.params)
+        success_term_val = succeess_term.func(env, **succeess_term.params)
 
         self.num_success += torch.sum(success_term_val).item()
         self.num_rollouts += len(success_term_val)

@@ -49,22 +49,12 @@ def run_closed_loop_policy(args: Gr00tN1ClosedLoopArguments,
     env_cfg.terminations = {}
 
     # create environment from loaded config
-    env = gym.make(args.task, cfg=env_cfg)
+    env = gym.make(args.task, cfg=env_cfg).unwrapped
     # Set seed
-    env.unwrapped.seed(args.seed)
+    env.seed(args.seed)
 
     with contextlib.suppress(KeyboardInterrupt) and torch.inference_mode():
         while simulation_app.is_running() and not simulation_app.is_exiting():
-
-            # if args.record_images or args.record_videos:
-            #     record_camera = env.unwrapped.scene['record_cam']
-            #     record_idx = 0
-            # else:
-            #     record_camera = None
-            #     record_idx = None
-            # Read the initial state of the world for this episode.
-            # initial_state = episode_data["initial_state"]
-            # env.unwrapped.reset_to(initial_state, None, is_relative=True)
 
             # Terminate the simulation_app if having enough rollouts counted by the evaluator
             # Otherwise, continue the rollout endlessly
@@ -72,15 +62,15 @@ def run_closed_loop_policy(args: Gr00tN1ClosedLoopArguments,
                 break
 
             # reset environment
-            env.unwrapped.sim.reset()
+            env.sim.reset()
             env.reset(seed=args.seed)
 
-            robot = env.unwrapped.scene['robot']
+            robot = env.scene['robot']
             robot_state_sim = JointsAbsPosition(robot.data.joint_pos,
                                                 policy.gr1_state_joints_config,
                                                 args.simulation_device)
 
-            ego_camera = env.unwrapped.scene['robot_pov_cam']
+            ego_camera = env.scene['robot_pov_cam']
 
             for _ in tqdm.tqdm(range(args.rollout_length)):
                 robot_state_sim.set_joints_pos(robot.data.joint_pos)
