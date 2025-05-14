@@ -22,7 +22,17 @@ import yaml
 import numpy as np
 
 
-def dump_jsonl(data: collections.abc.Sequence, file_path: str | Path):
+def dump_jsonl(data, file_path):
+    """
+    Write a sequence of data to a file in JSON Lines format.
+
+    Args:
+        data: Sequence of items to write, one per line.
+        file_path: Path to the output file.
+
+    Returns:
+        None
+    """
     assert isinstance(data, collections.abc.Sequence) and not isinstance(data, str)
     if isinstance(data, (np.ndarray, np.number)):
         data = data.tolist()
@@ -31,11 +41,37 @@ def dump_jsonl(data: collections.abc.Sequence, file_path: str | Path):
             print(json.dumps(line), file=fp, flush=True)
 
 
-def dump_json(data: np.ndarray | np.number | List, file_path: str | Path, **kwargs):
+def dump_json(data, file_path, **kwargs):
+    """
+    Write data to a file in standard JSON format.
+
+    Args:
+        data: Data to write to the file.
+        file_path: Path to the output file.
+        **kwargs: Additional keyword arguments for json.dump.
+
+    Returns:
+        None
+    """
     if isinstance(data, (np.ndarray, np.number)):
         data = data.tolist()
     with open(file_path, "w") as fp:
         json.dump(data, fp, **kwargs)
+
+
+def load_json(file_path: str | Path, **kwargs) -> Dict[str, Any]:
+    """
+    Load a JSON file.
+
+    Args:
+        file_path: Path to the JSON file to load.
+        **kwargs: Additional keyword arguments for the JSON loader.
+
+    Returns:
+        Dictionary loaded from the JSON file.
+    """
+    with open(file_path, "r") as fp:
+        return json.load(fp, **kwargs)
 
 
 def load_gr1_joints_config(yaml_path: str | Path) -> Dict[str, Any]:

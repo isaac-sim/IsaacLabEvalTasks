@@ -18,10 +18,10 @@ import numpy as np
 import torch
 
 
-def resize_frames_with_padding(frames: torch.Tensor,
+def resize_frames_with_padding(frames: torch.Tensor | np.ndarray,
                                target_image_size: tuple,
                                bgr_conversion: bool = False,
-                               pad_img: bool = True) -> torch.Tensor:
+                               pad_img: bool = True) -> np.ndarray:
     """Process batch of frames with padding and resizing vectorized
     Args:
         frames: np.ndarray of shape [N, 256, 160, 3]
@@ -29,8 +29,10 @@ def resize_frames_with_padding(frames: torch.Tensor,
         bgr_conversion: whether to convert BGR to RGB
         pad_img: whether to resize images
     """
-    # create copy to cpu numpy array
-    frames = frames.cpu().numpy()
+    if isinstance(frames, torch.Tensor):
+        frames = frames.cpu().numpy()
+    elif not isinstance(frames, np.ndarray):
+        raise ValueError(f"Invalid frame type: {type(frames)}")
 
     if bgr_conversion:
         frames = cv2.cvtColor(frames, cv2.COLOR_BGR2RGB)

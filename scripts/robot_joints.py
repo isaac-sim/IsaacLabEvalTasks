@@ -42,8 +42,6 @@ class JointsAbsPosition:
 
     @staticmethod
     def from_array(array: np.ndarray, joint_order_config: Dict[str, int], device: torch.device) -> 'JointsAbsPosition':
-        assert array.ndim == 1
-        assert array.shape[0] == len(joint_order_config)
         return JointsAbsPosition(joints_pos=torch.from_numpy(array).to(device),
                                  joints_order_config=joint_order_config,
                                  device=device)
