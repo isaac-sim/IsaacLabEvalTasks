@@ -13,13 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 import collections
-from pathlib import Path
-from typing import List, Dict, Any
-import yaml
-
+import json
 import numpy as np
+import yaml
+from pathlib import Path
+from typing import Any, Dict
 
 
 def dump_jsonl(data, file_path):
@@ -70,12 +69,12 @@ def load_json(file_path: str | Path, **kwargs) -> Dict[str, Any]:
     Returns:
         Dictionary loaded from the JSON file.
     """
-    with open(file_path, "r") as fp:
+    with open(file_path) as fp:
         return json.load(fp, **kwargs)
 
 
 def load_gr1_joints_config(yaml_path: str | Path) -> Dict[str, Any]:
     """Load GR1 joint configuration from YAML file"""
-    with open(yaml_path, 'r', encoding='utf-8') as f:
+    with open(yaml_path, encoding="utf-8") as f:
         config = yaml.safe_load(f)
-    return config.get('joints', {})
+    return config.get("joints", {})

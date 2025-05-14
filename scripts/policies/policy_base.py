@@ -16,9 +16,9 @@
 
 from abc import ABC, abstractmethod
 
-from isaaclab.sensors import Camera
-
 from robot_joints import JointsAbsPosition
+
+from isaaclab.sensors import Camera
 
 
 class PolicyBase(ABC):

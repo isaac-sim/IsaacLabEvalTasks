@@ -49,6 +49,7 @@ from isaaclab_tasks.utils.parse_cfg import parse_env_cfg
 # Import extensions to set up environment tasks
 import isaaclab_eval_tasks.tasks  # noqa: F401
 
+
 class TestEnvironments(unittest.TestCase):
     """Test cases for all registered environments."""
 

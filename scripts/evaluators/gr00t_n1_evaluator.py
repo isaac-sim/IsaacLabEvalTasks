@@ -13,14 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import gymnasium as gym
+import torch
 from typing import Optional
 
-import torch
-import gymnasium as gym
+from evaluators.evaluator_base import EvaluatorBase
 
 from isaaclab.managers import TerminationTermCfg as DoneTerm
-
-from evaluators.evaluator_base import EvaluatorBase
 
 
 class Gr00tN1Evaluator(EvaluatorBase):
@@ -29,6 +28,7 @@ class Gr00tN1Evaluator(EvaluatorBase):
     and pipe sorting tasks, by tracking the success rate of the policy over a series of demos.
     Success is defined as termination term in the environment configuration script
     """
+
     def __init__(self, checkpoint_name: str, eval_file_path: Optional[str] = None, seed: int = 10) -> None:
         super().__init__(checkpoint_name, eval_file_path, seed)
         self.num_success = 0
@@ -50,5 +50,5 @@ class Gr00tN1Evaluator(EvaluatorBase):
         self.eval_dict["summary"] = {
             "successful_trials": self.num_success,
             "total_rollouts": self.num_rollouts,
-            "success_rate": self.num_success / self.num_rollouts
+            "success_rate": self.num_success / self.num_rollouts,
         }

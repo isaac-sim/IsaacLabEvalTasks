@@ -13,35 +13,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import multiprocessing as mp
+import h5py
 import json
-from pathlib import Path
+import multiprocessing as mp
+import numpy as np
 import shutil
 import subprocess
 import traceback
+from pathlib import Path
+from tqdm import tqdm
 from typing import Any, Dict
 
-import h5py
-import numpy as np
 import pandas as pd
 import torchvision
-from tqdm import tqdm
 import tyro
+from io_utils import dump_json, dump_jsonl, load_gr1_joints_config, load_json
+from policies.image_conversion import resize_frames_with_padding
+from policies.joints_conversion import remap_sim_joints_to_policy_joints
+from robot_joints import JointsAbsPosition
 
 from config.args import Gr00tN1DatasetConfig
-from io_utils import dump_jsonl, dump_json, load_gr1_joints_config
 
-from robot_joints import JointsAbsPosition
-from io_utils import load_json
-from policies.joints_conversion import remap_sim_joints_to_policy_joints
-from policies.image_conversion import resize_frames_with_padding
-
-HDF5_KEY = {"state": "robot_joint_pos",
-            "action": "processed_actions"}
-LEROBOT_KEY = {"state": "observation.state",
-               "action": "action",
-               "video": "observation.images.ego_view",
-               "annotation": ("annotation.human.action.task_description", "annotation.human.action.valid")}
+HDF5_KEY = {"state": "robot_joint_pos", "action": "processed_actions"}
+LEROBOT_KEY = {
+    "state": "observation.state",
+    "action": "action",
+    "video": "observation.images.ego_view",
+    "annotation": ("annotation.human.action.task_description", "annotation.human.action.valid"),
+}
 
 
 def get_video_metadata(video_path: str) -> Dict[str, Any] | None:
@@ -221,9 +220,11 @@ def write_video_job(queue: mp.Queue, error_queue: mp.Queue, config: Gr00tN1Datas
                 # Create parent directory if it doesn't exist
                 video_path.parent.mkdir(parents=True, exist_ok=True)
                 assert frames.shape[1:] == config.original_image_size, f"Frames shape is {frames.shape}"
-                frames = resize_frames_with_padding(frames, target_image_size=config.target_image_size, bgr_conversion=False, pad_img=True)
+                frames = resize_frames_with_padding(
+                    frames, target_image_size=config.target_image_size, bgr_conversion=False, pad_img=True
+                )
                 # h264 codec encoding
-                torchvision.io.write_video(video_path, frames, fps, video_codec='h264')
+                torchvision.io.write_video(video_path, frames, fps, video_codec="h264")
 
         except Exception as e:
             # Get the traceback
@@ -261,19 +262,19 @@ def convert_trajectory_to_df(
     # 1. Get state, action, and timestamp
     length = None
     for key, hdf5_key_name in HDF5_KEY.items():
-        assert key in ['state', 'action']
+        assert key in ["state", "action"]
         lerobot_key_name = LEROBOT_KEY[key]
-        if key == 'state':
-            joints = trajectory['obs'][hdf5_key_name]
+        if key == "state":
+            joints = trajectory["obs"][hdf5_key_name]
         else:
             joints = trajectory[hdf5_key_name]
         joints = joints.astype(np.float64)
 
-        if key == 'state':
+        if key == "state":
             # remove the last obs
             joints = joints[:-1]
             input_joints_config = state_joints_config
-        elif key == 'action':
+        elif key == "action":
             # remove the last idle action
             joints = joints[:-1]
             input_joints_config = action_joints_config
@@ -283,14 +284,18 @@ def convert_trajectory_to_df(
         assert joints.shape[1] == len(input_joints_config)
 
         # 1.1. Remap the joints to the LeRobot joint orders
-        joints = JointsAbsPosition.from_array(joints, input_joints_config, device='cpu')
+        joints = JointsAbsPosition.from_array(joints, input_joints_config, device="cpu")
         remapped_joints = remap_sim_joints_to_policy_joints(joints, gr00t_joints_config)
         # 1.2. Fill in the missing joints with zeros
         ordered_joints = []
         for joint_group in gr00t_modality_config[key].keys():
-            num_joints = gr00t_modality_config[key][joint_group]['end'] - gr00t_modality_config[key][joint_group]['start']
+            num_joints = (
+                gr00t_modality_config[key][joint_group]["end"] - gr00t_modality_config[key][joint_group]["start"]
+            )
             if joint_group not in remapped_joints.keys():
-                remapped_joints[joint_group] = np.zeros((joints.get_joints_pos().shape[0], num_joints), dtype=np.float64)
+                remapped_joints[joint_group] = np.zeros(
+                    (joints.get_joints_pos().shape[0], num_joints), dtype=np.float64
+                )
             else:
                 assert remapped_joints[joint_group].shape[1] == num_joints
             ordered_joints.append(remapped_joints[joint_group])
@@ -299,11 +304,11 @@ def convert_trajectory_to_df(
         concatenated = np.concatenate(ordered_joints, axis=1)
         data[lerobot_key_name] = [row for row in concatenated]
 
-    assert len(data[LEROBOT_KEY['action']]) == len(data[LEROBOT_KEY['state']])
-    length = len(data[LEROBOT_KEY['action']])
-    data['timestamp'] = np.arange(length).astype(np.float64) * (1. / config.fps)
+    assert len(data[LEROBOT_KEY["action"]]) == len(data[LEROBOT_KEY["state"]])
+    length = len(data[LEROBOT_KEY["action"]])
+    data["timestamp"] = np.arange(length).astype(np.float64) * (1.0 / config.fps)
     # 2. Get the annotation
-    annotation_keys = LEROBOT_KEY['annotation']
+    annotation_keys = LEROBOT_KEY["annotation"]
     # task selection
     data[annotation_keys[0]] = np.ones(length, dtype=int) * config.task_index
     # valid is 1
@@ -375,10 +380,7 @@ def convert_hdf5_to_lerobot(config: Gr00tN1DatasetConfig):
         try:
             trajectory = hdf5_data[trajectory_id]
             df_ret_dict = convert_trajectory_to_df(
-                trajectory=trajectory,
-                episode_index=episode_index,
-                index_start=total_length,
-                config=config
+                trajectory=trajectory, episode_index=episode_index, index_start=total_length, config=config
             )
         except Exception as e:
             print(f"Error loading trajectory {trajectory_id}: {e}")
@@ -403,13 +405,12 @@ def convert_hdf5_to_lerobot(config: Gr00tN1DatasetConfig):
         )
         # 2.3. Generate videos/
         new_video_relpath = config.video_path.format(
-            episode_chunk=episode_chunk,
-            video_key=LEROBOT_KEY["video"],
-            episode_index=episode_index)
+            episode_chunk=episode_chunk, video_key=LEROBOT_KEY["video"], episode_index=episode_index
+        )
         new_video_path = config.lerobot_data_dir / new_video_relpath
         if LEROBOT_KEY["video"] not in video_paths.keys():
             video_paths[LEROBOT_KEY["video"]] = new_video_path
-        frames = np.array(trajectory['obs']['robot_pov_cam'])
+        frames = np.array(trajectory["obs"]["robot_pov_cam"])
         # remove last frame due to how Lab reports observations
         frames = frames[:-1]
         assert len(frames) == length
@@ -421,9 +422,7 @@ def convert_hdf5_to_lerobot(config: Gr00tN1DatasetConfig):
     # 3. Generate the rest of meta/
     # 3.1. Generate tasks.json
     tasks_path = lerobot_meta_dir / config.tasks_fname
-    task_jsonlines = [
-        {"task_index": task_index, "task": task} for task_index, task in tasks.items()
-    ]
+    task_jsonlines = [{"task_index": task_index, "task": task} for task_index, task in tasks.items()]
     dump_jsonl(task_jsonlines, tasks_path)
 
     # 3.2. Generate episodes.jsonl
@@ -443,7 +442,7 @@ def convert_hdf5_to_lerobot(config: Gr00tN1DatasetConfig):
         total_chunks=len(trajectory_ids) // config.chunks_size,
         step_data=example_data["data"],
         video_paths=video_paths,
-        config=config
+        config=config,
     )
     dump_json(info_json, lerobot_meta_dir / "info.json", indent=4)
 

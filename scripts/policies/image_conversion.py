@@ -13,15 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import cv2
 import numpy as np
 import torch
 
+import cv2
 
-def resize_frames_with_padding(frames: torch.Tensor | np.ndarray,
-                               target_image_size: tuple,
-                               bgr_conversion: bool = False,
-                               pad_img: bool = True) -> np.ndarray:
+
+def resize_frames_with_padding(
+    frames: torch.Tensor | np.ndarray, target_image_size: tuple, bgr_conversion: bool = False, pad_img: bool = True
+) -> np.ndarray:
     """Process batch of frames with padding and resizing vectorized
     Args:
         frames: np.ndarray of shape [N, 256, 160, 3]
@@ -45,8 +45,8 @@ def resize_frames_with_padding(frames: torch.Tensor | np.ndarray,
         frames = np.pad(
             frames,
             pad_width=((0, 0), (top_padding, bottom_padding), (0, 0), (0, 0)),
-            mode='constant',
-            constant_values=0
+            mode="constant",
+            constant_values=0,
         )
 
     # Resize all frames at once

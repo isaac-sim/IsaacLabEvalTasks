@@ -14,22 +14,18 @@
 # limitations under the License.
 
 import os
-from typing import Dict, List
-
-import numpy as np
-import torch
-
-from isaaclab.sensors import Camera
 
 from gr00t.experiment.data_config import DATA_CONFIG_MAP
 from gr00t.model.policy import Gr00tPolicy
+from io_utils import load_gr1_joints_config
+from policies.image_conversion import resize_frames_with_padding
+from policies.joints_conversion import remap_policy_joints_to_sim_joints, remap_sim_joints_to_policy_joints
+from policies.policy_base import PolicyBase
+from robot_joints import JointsAbsPosition
+
+from isaaclab.sensors import Camera
 
 from config.args import Gr00tN1ClosedLoopArguments
-from policies.image_conversion import resize_frames_with_padding
-from policies.policy_base import PolicyBase
-from policies.joints_conversion import remap_sim_joints_to_policy_joints, remap_policy_joints_to_sim_joints
-from robot_joints import JointsAbsPosition
-from io_utils import load_gr1_joints_config
 
 
 class Gr00tN1Policy(PolicyBase):
@@ -64,14 +60,16 @@ class Gr00tN1Policy(PolicyBase):
             modality_transform=modality_transform,
             embodiment_tag=self.args.embodiment_tag,
             denoising_steps=self.args.denoising_steps,
-            device=self.args.policy_device
+            device=self.args.policy_device,
         )
 
     def step(self, current_state: JointsAbsPosition, camera: Camera) -> JointsAbsPosition:
         """Call every simulation step to update policy's internal state."""
         pass
 
-    def get_new_goal(self, current_state: JointsAbsPosition, ego_camera: Camera, language_instruction: str) -> JointsAbsPosition:
+    def get_new_goal(
+        self, current_state: JointsAbsPosition, ego_camera: Camera, language_instruction: str
+    ) -> JointsAbsPosition:
         """
         Run policy prediction on the given observations. Produce a new action goal for the robot.
 
@@ -83,9 +81,11 @@ class Gr00tN1Policy(PolicyBase):
         Returns:
             A dictionary containing the inferred action for robot joints.
         """
-        rgb = ego_camera.data.output['rgb']
+        rgb = ego_camera.data.output["rgb"]
         # Apply preprocessing to rgb
-        rgb = resize_frames_with_padding(rgb, target_image_size=self.args.target_image_size, bgr_conversion=False, pad_img=True)
+        rgb = resize_frames_with_padding(
+            rgb, target_image_size=self.args.target_image_size, bgr_conversion=False, pad_img=True
+        )
         # Retrieve joint positions as proprioceptive states and remap to policy joint orders
         robot_state_policy = remap_sim_joints_to_policy_joints(current_state, self.gr00t_joints_config)
 
@@ -100,10 +100,9 @@ class Gr00tN1Policy(PolicyBase):
         }
         robot_action_policy = self.policy.get_action(observations)
 
-        robot_action_sim = remap_policy_joints_to_sim_joints(robot_action_policy,
-                                                             self.gr00t_joints_config,
-                                                             self.gr1_action_joints_config,
-                                                             self.args.simulation_device)
+        robot_action_sim = remap_policy_joints_to_sim_joints(
+            robot_action_policy, self.gr00t_joints_config, self.gr1_action_joints_config, self.args.simulation_device
+        )
 
         return robot_action_sim
 
