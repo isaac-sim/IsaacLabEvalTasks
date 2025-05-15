@@ -108,14 +108,14 @@ def get_video_metadata(video_path: str) -> Dict[str, Any] | None:
         return None
 
 
-def get_feature_info(step_data: pd.DataFrame, video_paths: Dict[str, str]) -> Dict[str, Any]:
+def get_feature_info(step_data: pd.DataFrame, video_paths: Dict[str, str], config: Gr00tN1DatasetConfig) -> Dict[str, Any]:
     """
     Get feature info from each  frame of the video.
 
     Args:
         step_data: DataFrame containing data of an episode.
         video_paths: Dictionary mapping video keys to their file paths.
-
+        config: Configuration object containing dataset and path information.
     Returns:
         Dictionary containing feature information for each column and video.
     """
