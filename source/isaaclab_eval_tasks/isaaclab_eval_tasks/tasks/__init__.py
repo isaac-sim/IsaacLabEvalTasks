@@ -28,7 +28,6 @@ gym.register(
     id="Isaac-ExhaustPipe-GR1T2-ClosedLoop-v0",
     entry_point="isaaclab.envs:ManagerBasedRLEnv",
     kwargs={"env_cfg_entry_point": exhaustpipe_gr1t2_closedloop_env_cfg.ExhaustPipeGR1T2ClosedLoopEnvCfg},
-    disable_env_checker=True,
 )
 
 gym.register(
@@ -37,7 +36,6 @@ gym.register(
     kwargs={
         "env_cfg_entry_point": nutpour_gr1t2_closedloop_env_cfg.NutPourGR1T2ClosedLoopEnvCfg,
     },
-    disable_env_checker=True,
 )
 
 # The blacklist is used to prevent importing configs from sub-packages
