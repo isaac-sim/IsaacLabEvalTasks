@@ -136,7 +136,7 @@ def get_feature_info(step_data: pd.DataFrame, video_paths: Dict[str, str]) -> Di
             "shape": shape,
         }
         # State & action
-        if column in [LEROBOT_KEY["state"], LEROBOT_KEY["action"]]:
+        if column in [config.lerobot_keys["state"], config.lerobot_keys["action"]]:
             dof = column_data.shape[1]
             features[column]["names"] = [f"motor_{i}" for i in range(dof)]
 
