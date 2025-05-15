@@ -1,20 +1,31 @@
-# Copyright (c) 2025, The Isaac Lab Project Developers.
-# All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 #
-# SPDX-License-Identifier: BSD-3-Clause
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 
 import contextlib
-from typing import Optional
-
 import torch
 import tqdm
-import tyro
+from typing import Optional
 
-from isaaclab.app import AppLauncher
+import tyro
 from isaacsim import SimulationApp
 
+from isaaclab.app import AppLauncher
 
 from config.args import Gr00tN1ClosedLoopArguments
+
 args = tyro.cli(Gr00tN1ClosedLoopArguments)
 
 if args.enable_pinocchio:
@@ -24,25 +35,30 @@ if args.enable_pinocchio:
     import pinocchio  # noqa: F401
 
 # Launch the simulator
-app_launcher = AppLauncher(headless=args.headless, enable_cameras=True, num_envs=args.num_envs, device=args.simulation_device)
+app_launcher = AppLauncher(
+    headless=args.headless, enable_cameras=True, num_envs=args.num_envs, device=args.simulation_device
+)
 simulation_app = app_launcher.app
 
 import gymnasium as gym
-from isaaclab.envs import ManagerBasedRLEnvCfg
-
-import isaaclab_eval_tasks.tasks  # noqa: F401
 
 from closed_loop_policy import create_sim_environment
 from evaluators.gr00t_n1_evaluator import Gr00tN1Evaluator
 from policies.gr00t_n1_policy import Gr00tN1Policy
 from robot_joints import JointsAbsPosition
 
+from isaaclab.envs import ManagerBasedRLEnvCfg
 
-def run_closed_loop_policy(args: Gr00tN1ClosedLoopArguments,
-                           simulation_app: SimulationApp,
-                           env_cfg: ManagerBasedRLEnvCfg,
-                           policy: Gr00tN1Policy,
-                           evaluator: Optional[Gr00tN1Evaluator] = None):
+import isaaclab_eval_tasks.tasks  # noqa: F401
+
+
+def run_closed_loop_policy(
+    args: Gr00tN1ClosedLoopArguments,
+    simulation_app: SimulationApp,
+    env_cfg: ManagerBasedRLEnvCfg,
+    policy: Gr00tN1Policy,
+    evaluator: Optional[Gr00tN1Evaluator] = None,
+):
     # Extract success checking function
     succeess_term = env_cfg.terminations.success
     # Disable terminations to avoid reset env
@@ -65,12 +81,12 @@ def run_closed_loop_policy(args: Gr00tN1ClosedLoopArguments,
             env.sim.reset()
             env.reset(seed=args.seed)
 
-            robot = env.scene['robot']
-            robot_state_sim = JointsAbsPosition(robot.data.joint_pos,
-                                                policy.gr1_state_joints_config,
-                                                args.simulation_device)
+            robot = env.scene["robot"]
+            robot_state_sim = JointsAbsPosition(
+                robot.data.joint_pos, policy.gr1_state_joints_config, args.simulation_device
+            )
 
-            ego_camera = env.scene['robot_pov_cam']
+            ego_camera = env.scene["robot_pov_cam"]
 
             for _ in tqdm.tqdm(range(args.rollout_length)):
                 robot_state_sim.set_joints_pos(robot.data.joint_pos)
@@ -106,11 +122,9 @@ if __name__ == "__main__":
     evaluator = Gr00tN1Evaluator(args.checkpoint_name, args.eval_file_path, args.seed)
 
     # Run the closed loop policy.
-    run_closed_loop_policy(args=args,
-                           simulation_app=simulation_app,
-                           env_cfg=env_cfg,
-                           policy=gr00t_n1_policy,
-                           evaluator=evaluator)
+    run_closed_loop_policy(
+        args=args, simulation_app=simulation_app, env_cfg=env_cfg, policy=gr00t_n1_policy, evaluator=evaluator
+    )
 
     # Close simulation app after rollout is complete
     simulation_app.close()

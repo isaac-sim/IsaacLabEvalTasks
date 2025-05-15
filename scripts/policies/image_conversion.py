@@ -1,22 +1,27 @@
-# Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 #
-# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
-# property and proprietary rights in and to this material, related
-# documentation and any modifications thereto. Any use, reproduction,
-# disclosure or distribution of this material and related documentation
-# without an express license agreement from NVIDIA CORPORATION or
-# its affiliates is strictly prohibited.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-import cv2
 import numpy as np
 import torch
 
+import cv2
 
-def resize_frames_with_padding(frames: torch.Tensor,
-                               target_image_size: tuple,
-                               bgr_conversion: bool = False,
-                               pad_img: bool = True) -> torch.Tensor:
+
+def resize_frames_with_padding(
+    frames: torch.Tensor | np.ndarray, target_image_size: tuple, bgr_conversion: bool = False, pad_img: bool = True
+) -> np.ndarray:
     """Process batch of frames with padding and resizing vectorized
     Args:
         frames: np.ndarray of shape [N, 256, 160, 3]
@@ -24,8 +29,10 @@ def resize_frames_with_padding(frames: torch.Tensor,
         bgr_conversion: whether to convert BGR to RGB
         pad_img: whether to resize images
     """
-    # create copy to cpu numpy array
-    frames = frames.cpu().numpy()
+    if isinstance(frames, torch.Tensor):
+        frames = frames.cpu().numpy()
+    elif not isinstance(frames, np.ndarray):
+        raise ValueError(f"Invalid frame type: {type(frames)}")
 
     if bgr_conversion:
         frames = cv2.cvtColor(frames, cv2.COLOR_BGR2RGB)
@@ -38,8 +45,8 @@ def resize_frames_with_padding(frames: torch.Tensor,
         frames = np.pad(
             frames,
             pad_width=((0, 0), (top_padding, bottom_padding), (0, 0), (0, 0)),
-            mode='constant',
-            constant_values=0
+            mode="constant",
+            constant_values=0,
         )
 
     # Resize all frames at once

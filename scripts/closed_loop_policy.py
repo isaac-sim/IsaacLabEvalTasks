@@ -8,10 +8,9 @@
 # its affiliates is strictly prohibited.
 #
 
-import random
-
-import torch
 import numpy as np
+import random
+import torch
 
 from isaaclab_tasks.utils.parse_cfg import parse_env_cfg
 

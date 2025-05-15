@@ -1,89 +1,31 @@
-# Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 #
-# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
-# property and proprietary rights in and to this material, related
-# documentation and any modifications thereto. Any use, reproduction,
-# disclosure or distribution of this material and related documentation
-# without an express license agreement from NVIDIA CORPORATION or
-# its affiliates is strictly prohibited.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import os
-from typing import Dict, List
-
-import numpy as np
-import torch
-
-from isaaclab.sensors import Camera
 
 from gr00t.experiment.data_config import DATA_CONFIG_MAP
 from gr00t.model.policy import Gr00tPolicy
-
-from config.args import Gr00tN1ClosedLoopArguments
+from io_utils import load_gr1_joints_config
 from policies.image_conversion import resize_frames_with_padding
+from policies.joints_conversion import remap_policy_joints_to_sim_joints, remap_sim_joints_to_policy_joints
 from policies.policy_base import PolicyBase
 from robot_joints import JointsAbsPosition
-from io_utils import load_gr1_joints_config
 
+from isaaclab.sensors import Camera
 
-def remap_sim_joints_to_policy_joints(sim_joints_state: JointsAbsPosition,
-                                      policy_joints_config: Dict[str, List[str]]) -> Dict[str, np.ndarray]:
-    """
-    Remap the state or actions joints from simulation joint orders to policy joint orders
-    """
-    data = {}
-    assert isinstance(sim_joints_state, JointsAbsPosition)
-    for group, joints_list in policy_joints_config.items():
-        data[group] = []
-        for joint_name in joints_list:
-            if joint_name in sim_joints_state.joints_order_config.keys():
-                joint_index = sim_joints_state.joints_order_config[joint_name]
-                data[group].append(sim_joints_state.joints_pos[:, joint_index])
-            else:
-                raise ValueError(f"Joint {joint_name} not found in {sim_joints_state.joints_order_config}")
-
-        data[group] = np.stack(data[group], axis=1)
-    return data
-
-
-def remap_policy_joints_to_sim_joints(policy_joints: Dict[str, np.array],
-                                      policy_joints_config: Dict[str, List[str]],
-                                      sim_joints_config: Dict[str, int],
-                                      device: torch.device) -> JointsAbsPosition:
-    """
-    Remap the actions joints from policy joint orders to simulation joint orders
-    """
-    # assert all values in policy_joint keys are the same shape and save the shape to init data
-    policy_joint_shape = None
-    for _, joint_pos in policy_joints.items():
-        if policy_joint_shape is None:
-            policy_joint_shape = joint_pos.shape
-        else:
-            assert joint_pos.ndim == 3
-            assert joint_pos.shape[:2] == policy_joint_shape[:2]
-
-    assert policy_joint_shape is not None
-    data = torch.zeros([policy_joint_shape[0], policy_joint_shape[1], len(sim_joints_config)],
-                       device=device)
-    for joint_name, gr1_index in sim_joints_config.items():
-        match joint_name.split("_")[0]:
-            case "left":
-                joint_group = "left_arm"
-            case "right":
-                joint_group = "right_arm"
-            case "L":
-                joint_group = "left_hand"
-            case "R":
-                joint_group = "right_hand"
-            case _:
-                continue
-        if joint_name in policy_joints_config[joint_group]:
-            gr00t_index = policy_joints_config[joint_group].index(joint_name)
-            data[..., gr1_index] = torch.from_numpy(
-                policy_joints[f'action.{joint_group}'][..., gr00t_index]).to(device)
-
-    sim_joints = JointsAbsPosition(joints_pos=data, joints_order_config=sim_joints_config, device=device)
-    return sim_joints
+from config.args import Gr00tN1ClosedLoopArguments
 
 
 class Gr00tN1Policy(PolicyBase):
@@ -118,14 +60,16 @@ class Gr00tN1Policy(PolicyBase):
             modality_transform=modality_transform,
             embodiment_tag=self.args.embodiment_tag,
             denoising_steps=self.args.denoising_steps,
-            device=self.args.policy_device
+            device=self.args.policy_device,
         )
 
     def step(self, current_state: JointsAbsPosition, camera: Camera) -> JointsAbsPosition:
         """Call every simulation step to update policy's internal state."""
         pass
 
-    def get_new_goal(self, current_state: JointsAbsPosition, ego_camera: Camera, language_instruction: str) -> JointsAbsPosition:
+    def get_new_goal(
+        self, current_state: JointsAbsPosition, ego_camera: Camera, language_instruction: str
+    ) -> JointsAbsPosition:
         """
         Run policy prediction on the given observations. Produce a new action goal for the robot.
 
@@ -137,9 +81,11 @@ class Gr00tN1Policy(PolicyBase):
         Returns:
             A dictionary containing the inferred action for robot joints.
         """
-        rgb = ego_camera.data.output['rgb']
+        rgb = ego_camera.data.output["rgb"]
         # Apply preprocessing to rgb
-        rgb = resize_frames_with_padding(rgb, target_image_size=self.args.target_image_size, bgr_conversion=False, pad_img=True)
+        rgb = resize_frames_with_padding(
+            rgb, target_image_size=self.args.target_image_size, bgr_conversion=False, pad_img=True
+        )
         # Retrieve joint positions as proprioceptive states and remap to policy joint orders
         robot_state_policy = remap_sim_joints_to_policy_joints(current_state, self.gr00t_joints_config)
 
@@ -154,10 +100,9 @@ class Gr00tN1Policy(PolicyBase):
         }
         robot_action_policy = self.policy.get_action(observations)
 
-        robot_action_sim = remap_policy_joints_to_sim_joints(robot_action_policy,
-                                                             self.gr00t_joints_config,
-                                                             self.gr1_action_joints_config,
-                                                             self.args.simulation_device)
+        robot_action_sim = remap_policy_joints_to_sim_joints(
+            robot_action_policy, self.gr00t_joints_config, self.gr1_action_joints_config, self.args.simulation_device
+        )
 
         return robot_action_sim
 
