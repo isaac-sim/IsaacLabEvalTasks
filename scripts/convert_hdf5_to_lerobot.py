@@ -34,14 +34,6 @@ from robot_joints import JointsAbsPosition
 
 from config.args import Gr00tN1DatasetConfig
 
-HDF5_KEY = {"state": "robot_joint_pos", "action": "processed_actions"}
-LEROBOT_KEY = {
-    "state": "observation.state",
-    "action": "action",
-    "video": "observation.images.ego_view",
-    "annotation": ("annotation.human.action.task_description", "annotation.human.action.valid"),
-}
-
 
 def get_video_metadata(video_path: str) -> Dict[str, Any] | None:
     """
@@ -261,9 +253,9 @@ def convert_trajectory_to_df(
 
     # 1. Get state, action, and timestamp
     length = None
-    for key, hdf5_key_name in HDF5_KEY.items():
+    for key, hdf5_key_name in config.hdf5_keys.items():
         assert key in ["state", "action"]
-        lerobot_key_name = LEROBOT_KEY[key]
+        lerobot_key_name = config.lerobot_keys[key]
         if key == "state":
             joints = trajectory["obs"][hdf5_key_name]
         else:
@@ -304,11 +296,11 @@ def convert_trajectory_to_df(
         concatenated = np.concatenate(ordered_joints, axis=1)
         data[lerobot_key_name] = [row for row in concatenated]
 
-    assert len(data[LEROBOT_KEY["action"]]) == len(data[LEROBOT_KEY["state"]])
-    length = len(data[LEROBOT_KEY["action"]])
+    assert len(data[config.lerobot_keys["action"]]) == len(data[config.lerobot_keys["state"]])
+    length = len(data[config.lerobot_keys["action"]])
     data["timestamp"] = np.arange(length).astype(np.float64) * (1.0 / config.fps)
     # 2. Get the annotation
-    annotation_keys = LEROBOT_KEY["annotation"]
+    annotation_keys = config.lerobot_keys["annotation"]
     # task selection
     data[annotation_keys[0]] = np.ones(length, dtype=int) * config.task_index
     # valid is 1
@@ -405,12 +397,13 @@ def convert_hdf5_to_lerobot(config: Gr00tN1DatasetConfig):
         )
         # 2.3. Generate videos/
         new_video_relpath = config.video_path.format(
-            episode_chunk=episode_chunk, video_key=LEROBOT_KEY["video"], episode_index=episode_index
+            episode_chunk=episode_chunk, video_key=config.lerobot_keys["video"], episode_index=episode_index
         )
         new_video_path = config.lerobot_data_dir / new_video_relpath
-        if LEROBOT_KEY["video"] not in video_paths.keys():
-            video_paths[LEROBOT_KEY["video"]] = new_video_path
-        frames = np.array(trajectory["obs"]["robot_pov_cam"])
+        if config.video_name_lerobot not in video_paths.keys():
+            video_paths[config.video_name_lerobot] = new_video_path
+        assert config.pov_cam_name_sim in trajectory["obs"].keys()
+        frames = np.array(trajectory["obs"][config.pov_cam_name_sim])
         # remove last frame due to how Lab reports observations
         frames = frames[:-1]
         assert len(frames) == length

@@ -191,6 +191,17 @@ class Gr00tN1DatasetConfig:
             )
         },
     )
+    # Mimic-generated HDF5 datafield
+    state_name_sim: str = field(default="robot_joint_pos", metadata={"description": "Name of the state in the HDF5 file."})
+    action_name_sim: str = field(default="processed_actions", metadata={"description": "Name of the action in the HDF5 file."})
+    pov_cam_name_sim: str = field(default="robot_pov_cam", metadata={"description": "Name of the POV camera in the HDF5 file."})
+    # Gr00t-LeRobot datafield
+    state_name_lerobot: str = field(default="observation.state", metadata={"description": "Name of the state in the LeRobot file."})
+    action_name_lerobot: str = field(default="action", metadata={"description": "Name of the action in the LeRobot file."})
+    video_name_lerobot: str = field(default="observation.images.ego_view", metadata={"description": "Name of the video in the LeRobot file."})
+    task_description_lerobot: str = field(default="annotation.human.action.task_description", metadata={"description": "Name of the task description in the LeRobot file."})
+    valid_lerobot: str = field(default="annotation.human.action.valid", metadata={"description": "Name of the validity in the LeRobot file."})
+
     # Parquet
     chunks_size: int = field(default=1000, metadata={"description": "Number of episodes per data chunk."})
     # mp4 video
@@ -281,3 +292,18 @@ class Gr00tN1DatasetConfig:
             print(f"Warning: lerobot_data_dir {self.lerobot_data_dir} already exists. Removing it.")
             # remove directory contents and the directory itself using shutil
             shutil.rmtree(self.lerobot_data_dir)
+        # Prepare data keys for mimic-generated hdf5 file
+        self.hdf5_keys = {
+            "state": self.state_name_sim,
+            "action": self.action_name_sim,
+        }
+        # Prepare data keys for LeRobot file
+        self.lerobot_keys = {
+            "state": self.state_name_lerobot,
+            "action": self.action_name_lerobot,
+            "video": self.video_name_lerobot,
+            "annotation": (
+                self.task_description_lerobot,
+                self.valid_lerobot,
+            ),
+        }
