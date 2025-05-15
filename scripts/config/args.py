@@ -150,9 +150,12 @@ class Gr00tN1ClosedLoopArguments:
         if self.task_name.upper() not in EvalTaskConfig.__members__:
             raise ValueError(f"task_name must be one of: {', '.join(EvalTaskConfig.__members__.keys())}")
         config = EvalTaskConfig[self.task_name.upper()]
-        self.task = config.task
-        self.model_path = config.model_path
-        self.language_instruction = config.language_instruction
+        if self.task == "":
+            self.task = config.task
+        if self.model_path == "":
+            self.model_path = config.model_path
+        if self.language_instruction == "":
+            self.language_instruction = config.language_instruction
 
         assert (
             self.num_feedback_actions <= self.action_horizon
