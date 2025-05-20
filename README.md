@@ -192,14 +192,19 @@ You can deploy the post-trained GR00T N1 policy for closed-loop control of the G
 #### 🚀 Parallelized Evaluation:
 Isaac Lab supports parallelized environment instances for scalable benchmarking. Configure multiple parallel runs (e.g., 10–100 instances) to statistically quantify policy success rates under varying initial conditions.
 
-<p align="center">
-  <img src="https://download.isaacsim.omniverse.nvidia.com/isaaclab/images/gr-1_gn1_tuned_nut_pouring.gif" width="45%" alt="Nut Pouring"/>
-  <img src="https://download.isaacsim.omniverse.nvidia.com/isaaclab/images/gr-1_gn1_tuned_exhaust_pipe.gif" width="45%" alt="Exhaust Pipe Sorting"/>
-</p>
+<table>
+  <tr>
+    <td align="center">
+      <img src="doc/gr-1_gn1_tuned_nut_pourin.gif" width="300"/><br>
+      <b>Nut Pouring</b>
+    </td>
+    <td align="center">
+      <img src="https://download.isaacsim.omniverse.nvidia.com/isaaclab/images/gr-1_gn1_tuned_exhaust_pipe.gif" width="300"/><br>
+      <b>Exhaust Pipe Sorting</b>
+    </td>
+  </tr>
+</table>
 
-<p align="center">
-  <b>Nut Pouring</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>Exhaust Pipe Sorting</b>
-</p>
 
 #### ✅ Success Metrics:
 - Task Completion: Binary success/failure based on object placement accuracy defined in the [evaluation tasks](#️-evaluation-tasks). Success rates are logged in the teriminal per episode and the summary is saved in `EVAL_RESULTS_FNAME`.
