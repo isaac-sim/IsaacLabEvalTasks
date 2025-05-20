@@ -118,11 +118,11 @@ The process involved converting demonstration data (Mimic-generated motion traje
 ```bash
 # Example: Set `task_index` Based on Task
 # Nut Pouring
-TASK_INDEX=0
+export TASK_INDEX=0
 # Uncomment the below is Task is Exhaust Pipe Sorting
-# TASK_INDEX=2
+# export TASK_INDEX=2
 # data_root is directory of where Mimic-generated HDF5 is saved locally
-python convert_hdf5_to_lerobot.py --task_index "$TASK_INDEX" --data_root $DATASET_ROOT_DIR
+python convert_hdf5_to_lerobot.py --task_index $TASK_INDEX --data_root $DATASET_ROOT_DIR
 ```
 
 The Gr00t-LeRobot-compatible datasets will be available in `DATASET_ROOT_DIR`.
@@ -177,9 +177,9 @@ Make sure you have registered your Hugging Face account and have read-access tok
 # Provide your access token with read permission
 huggingface-cli login
 
-CKPT="nvidia/GR00T-N1-2B-tuned-Nut-Pouring-task"
+export CKPT="nvidia/GR00T-N1-2B-tuned-Nut-Pouring-task"
 # Or, to use the other checkpoint, uncomment the next line:
-# CKPT="nvidia/GR00T-N1-2B-tuned-Exhaust-Pipe-Sorting"
+# export CKPT="nvidia/GR00T-N1-2B-tuned-Exhaust-Pipe-Sorting"
 huggingface-cli download $CKPT
 ```
 
