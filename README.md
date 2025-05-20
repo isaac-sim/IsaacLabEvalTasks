@@ -3,17 +3,15 @@
 [![IsaacSim](https://img.shields.io/badge/IsaacSim-5.0.0-silver.svg)](https://docs.isaacsim.omniverse.nvidia.com/latest/index.html)
 [![Python](https://img.shields.io/badge/python-3.11-blue.svg)](https://docs.python.org/3/whatsnew/3.11.html)
 [![Linux platform](https://img.shields.io/badge/platform-linux--64-orange.svg)](https://releases.ubuntu.com/20.04/)
-[![Windows platform](https://img.shields.io/badge/platform-windows--64-orange.svg)](https://www.microsoft.com/en-us/)
 [![pre-commit](https://img.shields.io/github/actions/workflow/status/isaac-sim/IsaacLab/pre-commit.yaml?logo=pre-commit&logoColor=white&label=pre-commit&color=brightgreen)](https://github.com/isaac-sim/IsaacLab/actions/workflows/pre-commit.yaml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-yellow.svg)](https://opensource.org/license/apache-2-0)
 
-## Overview
+##  📝 Overview
 
-This repository helps evaluating manipulation policies (e.g. Gr00t-N1) trained/post-trained in Issac Lab, over pre-defined tasks. We
-have provided 2 industrial humanoid manipulation tasks, Nut Pouring and Exhaust Pipe Sorting.
+This repository introduces two new industrial manipulation tasks designed in [Isaac Lab](https://isaac-sim.github.io/IsaacLab/main/index.html), enabling simulating and evaluating manipulation policies (e.g. [Isaac Gr00t N1](https://github.com/NVIDIA/Isaac-GR00T)) using a humanoid robot. The tasks are designed to simulate realistic industrial scenarios, including Nut Pouring and Exhaust Pipe Sorting.
+It also provides benchmarking scripts for closed-loop evaluation of manipulation policy (i.e. Isaac Gr00t N1) with post-trained checkpoints. These scripts enable developers to load prebuilt environments and industrial tasks—such as nut pouring and pipe sorting—and run standardized benchmarks to quantitatively assess policy performance.
 
-
-## Installation
+## 📦 Installation
 
 - Install Isaac Lab by following the [installation guide](https://isaac-sim.github.io/IsaacLab/main/source/setup/installation/index.html). We recommend using the conda installation as it simplifies calling Python scripts from the terminal.
 
@@ -34,6 +32,7 @@ cd submodules/Isaac-GR00T
 pip install --upgrade setuptools
 pip install -e .
 pip install --no-build-isolation flash-attn==2.7.1.post4
+export PYTHONPATH=$PYTHONPATH:$INSTALL_DIR/IsaacLabEvalTasks/submodules/Isaac-GR00T
 ```
 
 - Verify that the GR00t deps are correctly installed by running the following command:
@@ -42,9 +41,185 @@ pip install --no-build-isolation flash-attn==2.7.1.post4
 python -c "import gr00t; print('gr00t imported successfully')"
 ```
 
-## Downloading Checkpoint and Dataset
-If you are 
+- Using a python interpreter that has Isaac Lab installed, install the library of Eavluation Tasks
 
+```bash
+python -m pip install -e source/isaaclab_eval_tasks
+```
+
+## 🛠️ Evaluation Tasks
+
+Two industrial tasks have been created in [Isaac Lab](https://isaac-sim.github.io/IsaacLab/main/index.html) to simulate robotic manipulation scenarios. The environments are set up with a humanoid robot (i.e. Fourier GR1-T2) positioned in front of several industrial objects on a table. This can include multi-step bi-manual tasks such as grasping, moving, sorting, or placing the objects into specific locations.
+
+The robot is positioned upright, facing the table with both arms slightly bent and hands open. A first-person-view monocular RGB camera is mounted on its head to cover the workspace.
+
+### Nut Pouring
+
+<div align="center">
+<img src="https://download.isaacsim.omniverse.nvidia.com/isaaclab/images/gr-1_nut_pouring_policy.gif" width="600" alt="Nut Pouring Task">
+<p><em>The robot picks up a beaker containing metallic nuts, pours one nut into a bowl, and places the bowl on a scale.</em></p>
+</div>
+
+The task is defined as successful if following criterias have been met.
+1. The sorting beaker is placed in the sorting bin
+2. The factory nut is in the sorting bowl
+3. The sorting bowl is placed on the sorting scale
+
+
+### Exhaust Pipe Sorting
+
+<div align="center">
+<img src="https://download.isaacsim.omniverse.nvidia.com/isaaclab/images/gr-1_exhaust_pipe_demo.gif" width="600" alt="Exhaust Pipe Sorting Task">
+<p><em>The robot picks up the blue exhaust pipe, transfers it to the other hand, and places the pipe into the blue bin.</em></p>
+</div>
+
+The task is defined as successful if following criteria has been met.
+
+1. The blue exhaust pipe is placed in the correct position
+
+
+## 📦 Downloading Datasets (Optional)
+
+The finetuning datasets are generated with Synethic Manipulation Motion Generation (SMMG), utilizing tools including
+GR00T-Teleop, Mimic on Isaac Lab simulation environment. More details related to how datasets are generated could be viewed in [Isaac Lab](https://isaac-sim.github.io/IsaacLab/main/index.html).
+
+Datasets are hosted on Hugging Face as listed below.
+
+[nvidia/PhysicalAI-GR00T-Tuned-Tasks: Nut Pouring](https://huggingface.co/datasets/nvidia/PhysicalAI-GR00T-Tuned-Tasks/tree/main/Nut-Pouring-task)
+
+[nvidia/PhysicalAI-GR00T-Tuned-Tasks: Exhaust-Pipe-Sorting](https://huggingface.co/datasets/nvidia/PhysicalAI-GR00T-Tuned-Tasks/tree/main/Exhaust-Pipe-Sorting-task)
+
+You can download the Gr00t-Lerobot format dataset ready for post training, or the original Mimic-generated HDF5 for data conversion.
+
+Make sure you have registered your Hugging Face account and have read-access token ready.
+
+```bash
+# Provide your access token with read permission
+huggingface-cli login
+
+DATASET="nvidia/PhysicalAI-GR00T-Tuned-Tasks"
+huggingface-cli download $DATASET
+
+```
+
+## 🤖 Isaac Gr00t N1 Policy Post-Trainig (Optional)
+
+[GR00T N1](https://github.com/NVIDIA/Isaac-GR00T?tab=readme-ov-file#nvidia-isaac-gr00t-n1) is a foundation model for generalized humanoid robot reasoning and skills, trained on an extensive multimodal dataset that includes real-world, synthetic, and internet-scale data. The model is designed for cross-embodiment generalization and can be efficiently adapted to new robot embodiments, tasks, and environments through post-training.
+
+We followed the recommended GR00T N1 post-training workflow to adapt the model for the Fourier GR1 robot, targeting two industrial manipulation tasks: nut pouring and exhaust pipe sorting. The process involves multiple steps introduces below. You can also skip to the next session [Downloading Checkpoints](#downloading-checkpoints) to get post-trained checkpoints.
+
+### Data Conversion
+
+The process involved converting demonstration data (Mimic-generated motion trajectories in HDF5) into the LeRobot-compatible schema ([Gr00t-Lerobot format guidlines](https://github.com/NVIDIA/Isaac-GR00T/blob/main/getting_started/LeRobot_compatible_data_schema.md)).
+
+- Using a python interpreter that has Isaac Lab, Gr00t and Eavluation Tasks installed, convert Mimic-generated trajectories by
+
+```bash
+# Example: Set `task_index` Based on Task
+# Nut Pouring
+TASK_INDEX=0
+# Uncomment the below is Task is Exhaust Pipe Sorting
+# TASK_INDEX=2
+# data_root is directory of where Mimic-generated HDF5 is saved locally
+python convert_hdf5_to_lerobot.py --task_index "$TASK_INDEX" --data_root $DATASET_ROOT_DIR
+```
+
+The Gr00t-LeRobot-compatible datasets will be available in `DATASET_ROOT_DIR`.
+<pre>
+<code>
+📂 PhysicalAI-GR00T-Tuned-Tasks
+├── 📂 data
+├── 📂 meta
+└── 📂 videos
+</code>
+</pre>
+
+### Post-training
+
+We finetuned the pre-trained [GR00T-N1-2B policy](https://huggingface.co/nvidia/GR00T-N1-2B) on thse two task-specific datasets. We provided the configurations with which we obtained the above checkpoints. With one node of H100s,
+
+```bash
+python scripts/gr00t_finetune.py \
+    --dataset_path=${DATASET_PATH} \
+    --output_dir=${OUTPUT_DIR} \
+    --data_config=gr1_arms_only \
+    --batch_size=96 \
+    --max_steps=20000 \
+    --num_gpus=8 \
+    --save_steps=5000 \
+    --base_model_path=nvidia/GR00T-N1-2B \
+    --no_tune_llm  \
+    --tune_visual \
+    --tune_projector \
+    --tune_diffusion_model \
+    --no-resume \
+    --dataloader_num_workers=16 \
+    --report_to=wandb \
+    --embodiment_tag=gr1
+```
+💡 **Tip:** Tuning with visual backend, action projector and diffusion model generally yields smaller trajectories errors (MSE), and higher closed-loop success rates.
+
+## 📦 Downloading Checkpoints
+
+We post-trained the Isaac Gr00t N1 policy using the above dataset, and the finetuned checkpoints are available to download.
+
+- [GR00T-N1-2B-tuned-Nut-Pouring-task](https://huggingface.co/nvidia/GR00T-N1-2B-tuned-Nut-Pouring-task)
+- [GR00T-N1-2B-tuned-Exhaust-Pipe-Sorting-task](https://huggingface.co/nvidia/GR00T-N1-2B-tuned-Exhaust-Pipe-Sorting-task)
+
+Make sure you have registered your Hugging Face account and have read-access token ready.
+```bash
+# Provide your access token with read permission
+huggingface-cli login
+
+CKPT="nvidia/GR00T-N1-2B-tuned-Nut-Pouring-task"
+# Or, to use the other checkpoint, uncomment the next line:
+# CKPT="nvidia/GR00T-N1-2B-tuned-Exhaust-Pipe-Sorting"
+huggingface-cli download $CKPT
+```
+
+## 📈 Policy Closed-loop Evaluation
+
+You can deploy the post-trained GR00T N1 policy for closed-loop control of the GR1 robot within Issac Lab environment, and benchmark its success rate in paralle runs.
+
+### Benchmarking Configuration
+
+#### 🚀 Parallelized Evaluation:
+Isaac Lab supports parallelized environment instances for scalable benchmarking. Configure multiple parallel runs (e.g., 10–100 instances) to statistically quantify policy success rates under varying initial conditions.
+
+
+#### ✅ Success Metrics:
+- Task Completion: Binary success/failure based on object placement accuracy defined in the [evaluation tasks](#️-evaluation-tasks).
+
+To run parallel evaluation on the Nut Pouring task:
+
+```bash
+python scripts/evaluate_gn1.py \
+    --num_feedback_actions 16 \
+    --num_envs 10 \
+    --task_name nutpouring \
+# Assume the post-trained policy checkpoints are under CKPTS_PATH
+    --model_path $CKPTS_PATH \
+    --max_num_rollouts 200
+```
+
+To run paralle evaluation on the Exhaust Pipe Sorting task:
+
+```bash
+python scripts/evaluate_gn1.py \
+    --num_feedback_actions 16 \
+    --num_envs 10 \
+    --task_name pipesorting
+# Assume the post-trained policy checkpoints are under CKPTS_PATH
+    --model_path $CKPTS_PATH \
+    --max_num_rollouts 200
+```
+
+We report the success rate of evaluating tuned GN1 policy over 200 trials, with random seed=15.
+
+| Evaluation Task      | SR       |
+|----------------------|----------|
+| Nut Pouring          | 91%      |
+| Exhaust Pipe Sorting | 95%      |
 
 ## Code formatting
 
