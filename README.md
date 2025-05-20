@@ -57,7 +57,7 @@ The robot is positioned upright, facing the table with both arms slightly bent a
 ### Nut Pouring
 
 <div align="center">
-<img src="https://download.isaacsim.omniverse.nvidia.com/isaaclab/images/gr-1_nut_pouring_policy.gif" width="600" alt="Nut Pouring Task">
+<img src="doc/gr-1_nut_pouring_policy.gif" width="600" alt="Nut Pouring Task">
 <p><em>The robot picks up a beaker containing metallic nuts, pours one nut into a bowl, and places the bowl on a scale.</em></p>
 </div>
 
@@ -70,7 +70,7 @@ The task is defined as successful if following criterias have been met.
 ### Exhaust Pipe Sorting
 
 <div align="center">
-<img src="https://download.isaacsim.omniverse.nvidia.com/isaaclab/images/gr-1_exhaust_pipe_demo.gif" width="600" alt="Exhaust Pipe Sorting Task">
+<img src="doc/gr-1_exhaust_pipe_demo.gif" width="600" alt="Exhaust Pipe Sorting Task">
 <p><em>The robot picks up the blue exhaust pipe, transfers it to the other hand, and places the pipe into the blue bin.</em></p>
 </div>
 
@@ -195,16 +195,15 @@ Isaac Lab supports parallelized environment instances for scalable benchmarking.
 <table>
   <tr>
     <td align="center">
-      <img src="doc/gr-1_gn1_tuned_nut_pourin.gif" width="300"/><br>
+      <img src="doc/gr-1_gn1_tuned_nut_pourin.gif" width="400"/><br>
       <b>Nut Pouring</b>
     </td>
     <td align="center">
-      <img src="https://download.isaacsim.omniverse.nvidia.com/isaaclab/images/gr-1_gn1_tuned_exhaust_pipe.gif" width="300"/><br>
+      <img src="doc/gr-1_gn1_tuned_exhaust_pipe.gif" width="400"/><br>
       <b>Exhaust Pipe Sorting</b>
     </td>
   </tr>
 </table>
-
 
 #### ✅ Success Metrics:
 - Task Completion: Binary success/failure based on object placement accuracy defined in the [evaluation tasks](#️-evaluation-tasks). Success rates are logged in the teriminal per episode and the summary is saved in `EVAL_RESULTS_FNAME`.
