@@ -157,7 +157,12 @@ python scripts/gr00t_finetune.py \
     --report_to=wandb \
     --embodiment_tag=gr1
 ```
-💡 **Tip:** Tuning with visual backend, action projector and diffusion model generally yields smaller trajectories errors (MSE), and higher closed-loop success rates.
+💡 **Tip:**
+
+1. Tuning with visual backend, action projector and diffusion model generally yields smaller trajectories errors (MSE), and higher closed-loop success rates.
+
+2. If you prefer tuning with less powerful GPUs, please follow the [reference guidelines](https://github.com/NVIDIA/Isaac-GR00T?tab=readme-ov-file#3-fine-tuning) about other finetuning options.
+
 
 ## 📦 Downloading Checkpoints
 
@@ -181,14 +186,36 @@ huggingface-cli download $CKPT
 
 You can deploy the post-trained GR00T N1 policy for closed-loop control of the GR1 robot within Issac Lab environment, and benchmark its success rate in paralle runs.
 
-### Benchmarking Configuration
+### Benchmarking Features
 
 #### 🚀 Parallelized Evaluation:
 Isaac Lab supports parallelized environment instances for scalable benchmarking. Configure multiple parallel runs (e.g., 10–100 instances) to statistically quantify policy success rates under varying initial conditions.
 
+<table>
+  <tr>
+    <td align="center">
+      <img src="https://download.isaacsim.omniverse.nvidia.com/isaaclab/images/gr-1_gn1_tuned_nut_pouring.gif" width="300"/><br>
+      <b>Nut Pouring</b>
+    </td>
+    <td align="center">
+      <img src="https://download.isaacsim.omniverse.nvidia.com/isaaclab/images/gr-1_gn1_tuned_exhaust_pipe.gif" width="300"/><br>
+      <b>Exhaust Pipe Sorting</b>
+    </td>
+  </tr>
+</table>
 
 #### ✅ Success Metrics:
-- Task Completion: Binary success/failure based on object placement accuracy defined in the [evaluation tasks](#️-evaluation-tasks).
+- Task Completion: Binary success/failure based on object placement accuracy defined in the [evaluation tasks](#️-evaluation-tasks). Success rates are logged in the teriminal per episode and the summary is saved in `EVAL_RESULTS_FNAME`.
+
+```bash
+==================================================
+Successful trials: 9, out of 10 trials
+Success rate: 0.9
+==================================================
+```
+<pre>
+
+</pre>
 
 To run parallel evaluation on the Nut Pouring task:
 
@@ -197,9 +224,12 @@ python scripts/evaluate_gn1.py \
     --num_feedback_actions 16 \
     --num_envs 10 \
     --task_name nutpouring \
+    --eval_file_path $EVAL_RESULTS_FNAME \
 # Assume the post-trained policy checkpoints are under CKPTS_PATH
     --model_path $CKPTS_PATH \
-    --max_num_rollouts 200
+    --rollout_length 30 \
+    --seed 10 \
+    --max_num_rollouts 100
 ```
 
 To run paralle evaluation on the Exhaust Pipe Sorting task:
@@ -208,10 +238,13 @@ To run paralle evaluation on the Exhaust Pipe Sorting task:
 python scripts/evaluate_gn1.py \
     --num_feedback_actions 16 \
     --num_envs 10 \
-    --task_name pipesorting
+    --task_name pipesorting \
+    --eval_file_path $EVAL_RESULTS_FNAME \
 # Assume the post-trained policy checkpoints are under CKPTS_PATH
     --model_path $CKPTS_PATH \
-    --max_num_rollouts 200
+    --rollout_length 20 \
+    --seed 10 \
+    --max_num_rollouts 100
 ```
 
 We report the success rate of evaluating tuned GN1 policy over 200 trials, with random seed=15.
@@ -220,6 +253,15 @@ We report the success rate of evaluating tuned GN1 policy over 200 trials, with 
 |----------------------|----------|
 | Nut Pouring          | 91%      |
 | Exhaust Pipe Sorting | 95%      |
+
+💡 **Tip:**
+1. Hardware requirement: Please follow the system requirements in [Isaac Sim](https://docs.isaacsim.omniverse.nvidia.com/latest/installation/requirements.html#system-requirements) and Isaac Gr00t to choose. The above evaluation results was reported on RTX Ada 6000, ubunto 22.04.
+
+2. `num_feedback_actions` determines the number of feedback actions to execute per inference, and it can be less than `action_horizon`. This option will impact the success rate of evaluation task even with the same checkpoint.
+
+3. `rollout_length` impacts how many batched inference to make before task termination. Normally we set it between 20 to 30 for a faster turnaround.
+
+4. `num_envs` decided the number of environments to run in parallel. Increase it too much (e.g. >100 on RTX Ada A6000) will significantly slow down the UI rendering. We recommend set between 10 to 30 for smooth rendering and efficient benchmarking.
 
 ## Code formatting
 
@@ -237,5 +279,3 @@ pre-commit run --all-files
 ```
 
 ## Troubleshooting
-
-### Hugging Face
