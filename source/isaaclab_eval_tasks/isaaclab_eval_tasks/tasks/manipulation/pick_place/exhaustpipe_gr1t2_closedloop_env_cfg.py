@@ -97,4 +97,4 @@ class ExhaustPipeGR1T2ClosedLoopEnvCfg(ExhaustPipeGR1T2BaseEnvCfg):
         # simulation settings
         self.sim.dt = 1 / 100
         self.decimation = 5
-        self.sim.render_interval = 2
+        self.sim.render_interval = 5

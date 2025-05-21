@@ -94,4 +94,4 @@ class NutPourGR1T2ClosedLoopEnvCfg(NutPourGR1T2BaseEnvCfg):
         # simulation settings
         self.sim.dt = 1 / 100
         self.decimation = 5
-        self.sim.render_interval = 1
+        self.sim.render_interval = 5

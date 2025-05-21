@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from isaacsim import SimulationApp
+from isaaclab.app import AppLauncher
 
 import contextlib
 import torch
@@ -20,9 +22,6 @@ import tqdm
 from typing import Optional
 
 import tyro
-from isaacsim import SimulationApp
-
-from isaaclab.app import AppLauncher
 
 from config.args import Gr00tN1ClosedLoopArguments
 
@@ -78,7 +77,6 @@ def run_closed_loop_policy(
                 break
 
             # reset environment
-            env.sim.reset()
             env.reset(seed=args.seed)
 
             robot = env.scene["robot"]
