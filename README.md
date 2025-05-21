@@ -1,25 +1,17 @@
-# Template for Isaac Lab Projects
+# Isaac Lab Evaluation Tasks
 
-[![IsaacSim](https://img.shields.io/badge/IsaacSim-4.5.0-silver.svg)](https://docs.omniverse.nvidia.com/isaacsim/latest/overview.html)
-[![Isaac Lab](https://img.shields.io/badge/IsaacLab-2.1.0-silver)](https://isaac-sim.github.io/IsaacLab)
-[![Python](https://img.shields.io/badge/python-3.10-blue.svg)](https://docs.python.org/3/whatsnew/3.10.html)
+[![IsaacSim](https://img.shields.io/badge/IsaacSim-5.0.0-silver.svg)](https://docs.isaacsim.omniverse.nvidia.com/latest/index.html)
+[![Python](https://img.shields.io/badge/python-3.11-blue.svg)](https://docs.python.org/3/whatsnew/3.11.html)
 [![Linux platform](https://img.shields.io/badge/platform-linux--64-orange.svg)](https://releases.ubuntu.com/20.04/)
-[![Windows platform](https://img.shields.io/badge/platform-windows--64-orange.svg)](https://www.microsoft.com/en-us/)
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
-[![License](https://img.shields.io/badge/license-MIT-yellow.svg)](https://opensource.org/license/mit)
+[![pre-commit](https://img.shields.io/github/actions/workflow/status/isaac-sim/IsaacLab/pre-commit.yaml?logo=pre-commit&logoColor=white&label=pre-commit&color=brightgreen)](https://github.com/isaac-sim/IsaacLab/actions/workflows/pre-commit.yaml)
+[![License](https://img.shields.io/badge/license-Apache--2.0-yellow.svg)](https://opensource.org/license/apache-2-0)
 
-## Overview
+##  📝 Overview
 
-This repository serves as a template for building projects or extensions based on Isaac Lab. It allows you to develop in an isolated environment, outside of the core Isaac Lab repository.
+This repository introduces two new industrial manipulation tasks designed in [Isaac Lab](https://isaac-sim.github.io/IsaacLab/main/index.html), enabling simulating and evaluating manipulation policies (e.g. [Isaac GR00T N1](https://github.com/NVIDIA/Isaac-GR00T)) using a humanoid robot. The tasks are designed to simulate realistic industrial scenarios, including Nut Pouring and Exhaust Pipe Sorting.
+It also provides benchmarking scripts for closed-loop evaluation of manipulation policy (i.e. Isaac GR00T N1) with post-trained checkpoints. These scripts enable developers to load prebuilt Issac Lab environments and industrial tasks—such as nut pouring and pipe sorting—and run standardized benchmarks to quantitatively assess policy performance.
 
-**Key Features:**
-
-- `Isolation` Work outside the core Isaac Lab repository, ensuring that your development efforts remain self-contained.
-- `Flexibility` This template is set up to allow your code to be run as an extension in Omniverse.
-
-**Keywords:** extension, template, isaaclab
-
-## Installation
+## 📦 Installation
 
 - Install Isaac Lab by following the [installation guide](https://isaac-sim.github.io/IsaacLab/main/source/setup/installation/index.html). We recommend using the conda installation as it simplifies calling Python scripts from the terminal.
 
@@ -27,131 +19,264 @@ This repository serves as a template for building projects or extensions based o
 
 ```bash
 # Option 1: HTTPS
-git clone https://github.com/isaac-sim/IsaacLabExtensionTemplate.git
+git clone --recurse-submodules https://github.com/isaac-sim/IsaacLabEvalTasks.git
 
 # Option 2: SSH
-git clone git@github.com:isaac-sim/IsaacLabExtensionTemplate.git
+git clone --recurse-submodules git@github.com:isaac-sim/IsaacLabEvalTasks.git
 ```
 
-- Throughout the repository, the name `isaaclab_eval_tasks` only serves as an example and we provide a script to rename all the references to it automatically:
+- Using a python interpreter or conda/virtual env that has Isaac Lab installed, install the library required by [Isaac GR00T](https://github.com/NVIDIA/Isaac-GR00T)
 
 ```bash
-# Enter the repository
-cd IsaacLabExtensionTemplate
-# Rename all occurrences of isaaclab_eval_tasks (in files/directories) to your_fancy_extension_name
-python scripts/rename_template.py your_fancy_extension_name
+cd submodules/Isaac-GR00T
+pip install --upgrade setuptools
+pip install -e .
+pip install --no-build-isolation flash-attn==2.7.1.post4
+export PYTHONPATH=$PYTHONPATH:$INSTALL_DIR/IsaacLabEvalTasks/submodules/Isaac-GR00T
 ```
 
-- Using a python interpreter that has Isaac Lab installed, install the library
+- Verify that the GR00t deps are correctly installed by running the following command:
+
+```bash
+python -c "import gr00t; print('gr00t imported successfully')"
+```
+
+- Using a python interpreter or conda/virtual env that has Isaac Lab installed, install the library of Evaluation Tasks
 
 ```bash
 python -m pip install -e source/isaaclab_eval_tasks
 ```
 
-- Verify that the extension is correctly installed by running the following command:
+## 🛠️ Evaluation Tasks
+
+Two industrial tasks have been created in [Isaac Lab](https://isaac-sim.github.io/IsaacLab/main/index.html) to simulate robotic manipulation scenarios. The environments are set up with a humanoid robot (i.e. Fourier GR1-T2) positioned in front of several industrial objects on a table. This can include multi-step bi-manual tasks such as grasping, moving, sorting, or placing the objects into specific locations.
+
+The robot is positioned upright, facing the table with both arms slightly bent and hands open. A first-person-view monocular RGB camera is mounted on its head to cover the workspace.
+
+
+### Nut Pouring
+
+<div align="center">
+<img src="doc/gr-1_nut_pouring_policy.gif" width="600" alt="Nut Pouring Task">
+<p><em>The robot picks up a beaker containing metallic nuts, pours one nut into a bowl, and places the bowl on a scale.</em></p>
+</div>
+
+The task is defined as successful if following criterias have been met.
+1. The sorting beaker is placed in the sorting bin
+2. The factory nut is in the sorting bowl
+3. The sorting bowl is placed on the sorting scale
+
+
+### Exhaust Pipe Sorting
+
+<div align="center">
+<img src="doc/gr-1_exhaust_pipe_demo.gif" width="600" alt="Exhaust Pipe Sorting Task">
+<p><em>The robot picks up the blue exhaust pipe, transfers it to the other hand, and places the pipe into the blue bin.</em></p>
+</div>
+
+The task is defined as successful if following criteria has been met.
+
+1. The blue exhaust pipe is placed in the correct position
+
+
+## 📦 Downloading Datasets (Optional)
+
+The finetuning datasets are generated with Synethic Manipulation Motion Generation (SMMG), utilizing tools including
+GR00T-Teleop, Mimic on Isaac Lab simulation environment. More details related to how datasets are generated could be viewed in [Isaac Lab](https://isaac-sim.github.io/IsaacLab/main/index.html).
+
+Datasets are hosted on Hugging Face as listed below.
+
+[nvidia/PhysicalAI-GR00T-Tuned-Tasks: Nut Pouring](https://huggingface.co/datasets/nvidia/PhysicalAI-GR00T-Tuned-Tasks/tree/main/Nut-Pouring-task)
+
+[nvidia/PhysicalAI-GR00T-Tuned-Tasks: Exhaust-Pipe-Sorting](https://huggingface.co/datasets/nvidia/PhysicalAI-GR00T-Tuned-Tasks/tree/main/Exhaust-Pipe-Sorting-task)
+
+You can download the GR00T-Lerobot format dataset ready for post training, or the original Mimic-generated HDF5 for data conversion.
+
+Make sure you have registered your Hugging Face account and have read-access token ready.
 
 ```bash
-python scripts/rsl_rl/train.py --task=Template-Isaac-Velocity-Rough-Anymal-D-v0
+# Provide your access token with read permission
+huggingface-cli login
+
+DATASET="nvidia/PhysicalAI-GR00T-Tuned-Tasks"
+huggingface-cli download $DATASET
+
 ```
 
-### Set up IDE (Optional)
+## 🤖 Isaac GR00T N1 Policy Post-Trainig (Optional)
 
-To setup the IDE, please follow these instructions:
+[GR00T N1](https://github.com/NVIDIA/Isaac-GR00T?tab=readme-ov-file#nvidia-isaac-gr00t-n1) is a foundation model for generalized humanoid robot reasoning and skills, trained on an extensive multimodal dataset that includes real-world, synthetic, and internet-scale data. The model is designed for cross-embodiment generalization and can be efficiently adapted to new robot embodiments, tasks, and environments through post-training.
 
-- Run VSCode Tasks, by pressing `Ctrl+Shift+P`, selecting `Tasks: Run Task` and running the `setup_python_env` in the drop down menu. When running this task, you will be prompted to add the absolute path to your Isaac Sim installation.
+We followed the recommended GR00T N1 post-training workflow to adapt the model for the Fourier GR1 robot, targeting two industrial manipulation tasks: nut pouring and exhaust pipe sorting. The process involves multiple steps introduced below. You can also skip to the next section [Downloading Checkpoints](#downloading-checkpoints) to get post-trained checkpoints.
 
-If everything executes correctly, it should create a file .python.env in the `.vscode` directory. The file contains the python paths to all the extensions provided by Isaac Sim and Omniverse. This helps in indexing all the python modules for intelligent suggestions while writing code.
+### Data Conversion
 
-### Setup as Omniverse Extension (Optional)
+The process involved converting demonstration data (Mimic-generated motion trajectories in HDF5) into the LeRobot-compatible schema ([GR00T-Lerobot format guidlines](https://github.com/NVIDIA/Isaac-GR00T/blob/main/getting_started/LeRobot_compatible_data_schema.md)).
 
-We provide an example UI extension that will load upon enabling your extension defined in `source/isaaclab_eval_tasks/isaaclab_eval_tasks/ui_extension_example.py`.
-
-To enable your extension, follow these steps:
-
-1. **Add the search path of your repository** to the extension manager:
-    - Navigate to the extension manager using `Window` -> `Extensions`.
-    - Click on the **Hamburger Icon** (☰), then go to `Settings`.
-    - In the `Extension Search Paths`, enter the absolute path to `IsaacLabExtensionTemplate/source`
-    - If not already present, in the `Extension Search Paths`, enter the path that leads to Isaac Lab's extension directory directory (`IsaacLab/source`)
-    - Click on the **Hamburger Icon** (☰), then click `Refresh`.
-
-2. **Search and enable your extension**:
-    - Find your extension under the `Third Party` category.
-    - Toggle it to enable your extension.
-
-## Docker setup
-
-### Building Isaac Lab Base Image
-
-Currently, we don't have the Docker for Isaac Lab publicly available. Hence, you'd need to build the docker image
-for Isaac Lab locally by following the steps [here](https://isaac-sim.github.io/IsaacLab/main/source/deployment/index.html).
-
-Once you have built the base Isaac Lab image, you can check it exists by doing:
+- Using a python interpreter or conda/virtual env that has Isaac Lab, GR00T and Eavluation Tasks installed, convert Mimic-generated trajectories by
 
 ```bash
-docker images
-
-# Output should look something like:
-#
-# REPOSITORY                       TAG       IMAGE ID       CREATED          SIZE
-# isaac-lab-base                   latest    28be62af627e   32 minutes ago   18.9GB
+# Example: Set `task_index` Based on Task
+# Nut Pouring
+export TASK_INDEX=0
+# Uncomment the below is Task is Exhaust Pipe Sorting
+# export TASK_INDEX=2
+# data_root is directory of where Mimic-generated HDF5 is saved locally
+python convert_hdf5_to_lerobot.py --task_index $TASK_INDEX --data_root $DATASET_ROOT_DIR
 ```
 
-### Building Isaac Lab Template Image
+The GR00T-LeRobot-compatible datasets will be available in `DATASET_ROOT_DIR`.
+<pre>
+<code>
+📂 PhysicalAI-GR00T-Tuned-Tasks
+├── 📂 data
+├── 📂 meta
+└── 📂 videos
+</code>
+</pre>
 
-Following above, you can build the docker container for this project. It is called `isaac-lab-template`. However,
-you can modify this name inside the [`docker/docker-compose.yaml`](docker/docker-compose.yaml).
+### Post-training
+
+We finetuned the pre-trained [GR00T-N1-2B policy](https://huggingface.co/nvidia/GR00T-N1-2B) on thse two task-specific datasets. We provided the configurations with which we obtained the above checkpoints. With one node of H100s,
 
 ```bash
-cd docker
-docker compose --env-file .env.base --file docker-compose.yaml build isaac-lab-template
+python scripts/gr00t_finetune.py \
+    --dataset_path=${DATASET_PATH} \
+    --output_dir=${OUTPUT_DIR} \
+    --data_config=gr1_arms_only \
+    --batch_size=96 \
+    --max_steps=20000 \
+    --num_gpus=8 \
+    --save_steps=5000 \
+    --base_model_path=nvidia/GR00T-N1-2B \
+    --no_tune_llm  \
+    --tune_visual \
+    --tune_projector \
+    --tune_diffusion_model \
+    --no-resume \
+    --dataloader_num_workers=16 \
+    --report_to=wandb \
+    --embodiment_tag=gr1
+```
+💡 **Tip:**
+
+1. Tuning with visual backend, action projector and diffusion model generally yields smaller trajectories errors (MSE), and higher closed-loop success rates.
+
+2. If you prefer tuning with less powerful GPUs, please follow the [reference guidelines](https://github.com/NVIDIA/Isaac-GR00T?tab=readme-ov-file#3-fine-tuning) about other finetuning options.
+
+
+## 📦 Downloading Checkpoints
+
+We post-trained the Isaac GR00T N1 policy using the above dataset, and the finetuned checkpoints are available to download.
+
+- [GR00T-N1-2B-tuned-Nut-Pouring-task](https://huggingface.co/nvidia/GR00T-N1-2B-tuned-Nut-Pouring-task)
+- [GR00T-N1-2B-tuned-Exhaust-Pipe-Sorting-task](https://huggingface.co/nvidia/GR00T-N1-2B-tuned-Exhaust-Pipe-Sorting-task)
+
+Make sure you have registered your Hugging Face account and have read-access token ready.
+```bash
+# Provide your access token with read permission
+huggingface-cli login
+
+export CKPT="nvidia/GR00T-N1-2B-tuned-Nut-Pouring-task"
+# Or, to use the other checkpoint, uncomment the next line:
+# export CKPT="nvidia/GR00T-N1-2B-tuned-Exhaust-Pipe-Sorting"
+huggingface-cli download $CKPT
 ```
 
-You can verify the image is built successfully using the same command as earlier:
+## 📈 Policy Closed-loop Evaluation
+
+You can deploy the post-trained GR00T N1 policy for closed-loop control of the GR1 robot within an Issac Lab environment, and benchmark its success rate in paralle runs.
+
+### Benchmarking Features
+
+#### 🚀 Parallelized Evaluation:
+Isaac Lab supports parallelized environment instances for scalable benchmarking. Configure multiple parallel runs (e.g., 10–100 instances) to statistically quantify policy success rates under varying initial conditions.
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="doc/gr-1_gn1_tuned_nut_pourin.gif" width="400"/><br>
+      <b>Nut Pouring</b>
+    </td>
+    <td align="center">
+      <img src="doc/gr-1_gn1_tuned_exhaust_pipe.gif" width="400"/><br>
+      <b>Exhaust Pipe Sorting</b>
+    </td>
+  </tr>
+</table>
+
+#### ✅ Success Metrics:
+- Task Completion: Binary success/failure based on object placement accuracy defined in the [evaluation tasks](#️-evaluation-tasks). Success rates are logged in the teriminal per episode as,
 
 ```bash
-docker images
-
-# Output should look something like:
-#
-# REPOSITORY                       TAG       IMAGE ID       CREATED             SIZE
-# isaac-lab-template               latest    00b00b647e1b   2 minutes ago       18.9GB
-# isaac-lab-base                   latest    892938acb55c   About an hour ago   18.9GB
+==================================================
+Successful trials: 9, out of 10 trials
+Success rate: 0.9
+==================================================
 ```
+And the summary report as json file can be viewed as,
+<pre>
+{
+    "metadata": {
+        "checkpoint_name": "gr00t-n1-2b-tuned",
+        "seed": 10,
+        "date": "2025-05-20 16:42:54"
+    },
+    "summary": {
+        "successful_trials": 91,
+        "total_rollouts": 100,
+        "success_rate": 0.91
+    }
+</pre>
 
-### Running the container
-
-After building, the usual next step is to start the containers associated with your services. You can do this with:
+To run parallel evaluation on the Nut Pouring task:
 
 ```bash
-docker compose --env-file .env.base --file docker-compose.yaml up
+# export EVAL_RESULTS_FNAME="./eval_nutpouring.json"
+python scripts/evaluate_gn1.py \
+    --num_feedback_actions 16 \
+    --num_envs 10 \
+    --task_name nutpouring \
+    --eval_file_path $EVAL_RESULTS_FNAME \
+# Assume the post-trained policy checkpoints are under CKPTS_PATH
+    --model_path $CKPTS_PATH \
+    --rollout_length 30 \
+    --seed 10 \
+    --max_num_rollouts 100
 ```
 
-This will start the services defined in your `docker-compose.yaml` file, including isaac-lab-template.
-
-If you want to run it in detached mode (in the background), use:
+To run parallel evaluation on the Exhaust Pipe Sorting task:
 
 ```bash
-docker compose --env-file .env.base --file docker-compose.yaml up -d
+# export EVAL_RESULTS_FNAME="./eval_pipesorting.json"
+python scripts/evaluate_gn1.py \
+    --num_feedback_actions 16 \
+    --num_envs 10 \
+    --task_name pipesorting \
+    --eval_file_path $EVAL_RESULTS_FNAME \
+    --checkpoint_name gr00t-n1-2b-tuned-pipesorting \
+# Assume the post-trained policy checkpoints are under CKPTS_PATH
+    --model_path $CKPTS_PATH \
+    --rollout_length 20 \
+    --seed 10 \
+    --max_num_rollouts 100
 ```
 
-### Interacting with a running container
+We report the success rate of evaluating tuned GR00T N1 policy over 200 trials, with random seed=15.
 
-If you want to run commands inside the running container, you can use the `exec` command:
+| Evaluation Task      | SR       |
+|----------------------|----------|
+| Nut Pouring          | 91%      |
+| Exhaust Pipe Sorting | 95%      |
 
-```bash
-docker exec --interactive --tty -e DISPLAY=${DISPLAY} isaac-lab-template /bin/bash
-```
+💡 **Tip:**
+1. Hardware requirement: Please follow the system requirements in [Isaac Sim](https://docs.isaacsim.omniverse.nvidia.com/latest/installation/requirements.html#system-requirements) and [Isaac GR00T](https://github.com/NVIDIA/Isaac-GR00T?tab=readme-ov-file#3-fine-tuning) to choose. The above evaluation results was reported on RTX A6000 Ada, Ubuntu 22.04.
 
-### Shutting down the container
+2. `num_feedback_actions` determines the number of feedback actions to execute per inference, and it can be less than `action_horizon`. This option will impact the success rate of evaluation task even with the same checkpoint.
 
-When you are done or want to stop the running containers, you can bring down the services:
+3. `rollout_length` impacts how many batched inference to make before task termination. Normally we set it between 20 to 30 for a faster turnaround.
 
-```bash
-docker compose --env-file .env.base --file docker-compose.yaml down
-```
-
-This stops and removes the containers, but keeps the images.
+4. `num_envs` decides the number of environments to run in parallel. Increase it too much (e.g. >100 on RTX A6000 Ada) will significantly slow down the UI rendering. We recommend set between 10 to 30 for smooth rendering and efficient benchmarking.
 
 ## Code formatting
 
@@ -170,29 +295,34 @@ pre-commit run --all-files
 
 ## Troubleshooting
 
-### Pylance Missing Indexing of Extensions
+#### Pip package version mismatch
 
-In some VsCode versions, the indexing of part of the extensions is missing. In this case, add the path to your extension in `.vscode/settings.json` under the key `"python.analysis.extraPaths"`.
+If you observe any of the following during [installation of GR00T](#-installation), you can ignore those errors.
+The GR00T policy runs on an older version of torch library with flash attention, and all other tools in this repository do not require
+torch>=2.7. Thus we downgrade the torch and related softwares to support GR00T inference. Mimic-related data generation workflows are not impacted.
+<pre>
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+isaaclab 0.37.2 requires trimesh, which is not installed.
+dex-retargeting 0.4.6 requires lxml>=5.2.2, which is not installed.
+dex-retargeting 0.4.6 requires trimesh>=4.4.0, which is not installed.
+isaaclab-tasks 0.10.31 requires torch>=2.7, but you have torch 2.5.1 which is incompatible.
+isaacsim-kernel 5.0.0 requires wrapt==1.16.0, but you have wrapt 1.14.1 which is incompatible.
+isaaclab-rl 0.2.0 requires pillow==11.0.0, but you have pillow 11.2.1 which is incompatible.
+isaaclab-rl 0.2.0 requires torch>=2.7, but you have torch 2.5.1 which is incompatible.
+isaaclab 0.37.2 requires pillow==11.0.0, but you have pillow 11.2.1 which is incompatible.
+isaaclab 0.37.2 requires starlette==0.46.0, but you have starlette 0.45.3 which is incompatible.
+isaaclab 0.37.2 requires torch>=2.7, but you have torch 2.5.1 which is incompatible.
+isaacsim-core 5.0.0 requires torch==2.7.0, but you have torch 2.5.1 which is incompatible.
+</pre>
 
-```json
-{
-    "python.analysis.extraPaths": [
-        "<path-to-ext-repo>/source/isaaclab_eval_tasks"
-    ]
-}
-```
+#### Running on Blackwell GPUs
 
-### Pylance Crash
+Unfortunately, due to limited support of flash attention module (by May 2025), GR00T policy can only support running on non-Blackwell GPUs. However
+you can run Mimic-related data generation workflows and GR00T-Lerobot data conversion on Blackwell. Blackwell support is coming soon.
 
-If you encounter a crash in `pylance`, it is probable that too many files are indexed and you run out of memory.
-A possible solution is to exclude some of omniverse packages that are not used in your project.
-To do so, modify `.vscode/settings.json` and comment out packages under the key `"python.analysis.extraPaths"`
-Some examples of packages that can likely be excluded are:
+#### Running evaluation on Multiple GPUs
 
-```json
-"<path-to-isaac-sim>/extscache/omni.anim.*"         // Animation packages
-"<path-to-isaac-sim>/extscache/omni.kit.*"          // Kit UI tools
-"<path-to-isaac-sim>/extscache/omni.graph.*"        // Graph UI tools
-"<path-to-isaac-sim>/extscache/omni.services.*"     // Services tools
-...
-```
+For rendering, please refer to the [Omniverse Devloper Guideline](https://docs.omniverse.nvidia.com/dev-guide/latest/linux-troubleshooting.html#q9-how-to-specify-what-gpus-to-run-omniverse-apps-on) for setting single-gpu mode or multi-gpu mode of Isaac Sim. For physics, we suggest to the evaluation to run on CPU
+set by `simulation_device` in evaluation.
+
+However, GR00T N1 policy only supports single-GPU inference (by May 2025). We have not tested on multi-GPU inference.
