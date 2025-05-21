@@ -107,7 +107,7 @@ huggingface-cli download $DATASET
 
 [GR00T N1](https://github.com/NVIDIA/Isaac-GR00T?tab=readme-ov-file#nvidia-isaac-gr00t-n1) is a foundation model for generalized humanoid robot reasoning and skills, trained on an extensive multimodal dataset that includes real-world, synthetic, and internet-scale data. The model is designed for cross-embodiment generalization and can be efficiently adapted to new robot embodiments, tasks, and environments through post-training.
 
-We followed the recommended GR00T N1 post-training workflow to adapt the model for the Fourier GR1 robot, targeting two industrial manipulation tasks: nut pouring and exhaust pipe sorting. The process involves multiple steps introduces below. You can also skip to the next session [Downloading Checkpoints](#downloading-checkpoints) to get post-trained checkpoints.
+We followed the recommended GR00T N1 post-training workflow to adapt the model for the Fourier GR1 robot, targeting two industrial manipulation tasks: nut pouring and exhaust pipe sorting. The process involves multiple steps introduced below. You can also skip to the next section [Downloading Checkpoints](#downloading-checkpoints) to get post-trained checkpoints.
 
 ### Data Conversion
 
