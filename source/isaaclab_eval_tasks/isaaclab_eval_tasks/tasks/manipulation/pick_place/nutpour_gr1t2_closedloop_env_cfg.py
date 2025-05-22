@@ -95,3 +95,7 @@ class NutPourGR1T2ClosedLoopEnvCfg(NutPourGR1T2BaseEnvCfg):
         self.sim.dt = 1 / 100
         self.decimation = 5
         self.sim.render_interval = 5
+
+        # WAR to skip while loop bug after calling env.reset() followed by env.sim.reset()
+        # https://github.com/isaac-sim/IsaacLab-Internal/blob/devel/source/isaaclab/isaaclab/envs/manager_based_env.py#L311C13-L311C53
+        self.wait_for_textures = False

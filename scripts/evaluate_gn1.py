@@ -77,6 +77,7 @@ def run_closed_loop_policy(
                 break
 
             # reset environment
+            env.sim.reset()
             env.reset(seed=args.seed)
 
             robot = env.scene["robot"]

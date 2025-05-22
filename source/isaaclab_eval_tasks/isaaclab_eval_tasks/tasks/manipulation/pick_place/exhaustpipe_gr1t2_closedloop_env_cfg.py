@@ -97,4 +97,8 @@ class ExhaustPipeGR1T2ClosedLoopEnvCfg(ExhaustPipeGR1T2BaseEnvCfg):
         # simulation settings
         self.sim.dt = 1 / 100
         self.decimation = 5
+
         self.sim.render_interval = 5
+        # WAR to skip while loop bug after calling env.reset() followed by env.sim.reset()
+        # https://github.com/isaac-sim/IsaacLab-Internal/blob/devel/source/isaaclab/isaaclab/envs/manager_based_env.py#L311C13-L311C53
+        self.wait_for_textures = False
