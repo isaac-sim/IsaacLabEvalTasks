@@ -184,7 +184,7 @@ def generate_info(
     info_template["data_path"] = config.data_path
     info_template["video_path"] = config.video_path
 
-    features = get_feature_info(step_data, video_paths)
+    features = get_feature_info(step_data, video_paths, config)
 
     info_template["features"] = features
     return info_template

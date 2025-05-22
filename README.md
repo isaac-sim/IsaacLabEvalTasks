@@ -99,9 +99,27 @@ Make sure you have registered your Hugging Face account and have read-access tok
 huggingface-cli login
 
 DATASET="nvidia/PhysicalAI-GR00T-Tuned-Tasks"
-huggingface-cli download $DATASET
+huggingface-cli download --repo-type dataset --resume-download $DATASET  --local-dir $DATASET_ROOT_DIR
 
 ```
+`DATASET_ROOT_DIR` is the path to the directory where you want to store those assets as below.
+
+<pre>
+<code>
+📂 PhysicalAI-GR00T-Tuned-Tasks
+├── 📂 Exhaust-Pipe-Sorting-task
+│   ├── 📂 data
+│   ├── 📂 meta
+│   └── 📂 videos
+├── exhaust_pipe_sorting_task.hdf5
+├── 📂 Nut-Pouring-task
+│   ├── 📂 data
+│   ├── 📂 meta
+│   └── 📂 videos
+├── nut_pouring_task.hdf5
+└── README.md
+</code>
+</pre>
 
 ## 🤖 Isaac GR00T N1 Policy Post-Trainig (Optional)
 
@@ -113,6 +131,7 @@ We followed the recommended GR00T N1 post-training workflow to adapt the model f
 
 The process involved converting demonstration data (Mimic-generated motion trajectories in HDF5) into the LeRobot-compatible schema ([GR00T-Lerobot format guidlines](https://github.com/NVIDIA/Isaac-GR00T/blob/main/getting_started/LeRobot_compatible_data_schema.md)).
 
+
 - Using a python interpreter or conda/virtual env that has Isaac Lab, GR00T and Eavluation Tasks installed, convert Mimic-generated trajectories by
 
 ```bash
@@ -122,22 +141,42 @@ export TASK_INDEX=0
 # Uncomment the below is Task is Exhaust Pipe Sorting
 # export TASK_INDEX=2
 # data_root is directory of where Mimic-generated HDF5 is saved locally
-python convert_hdf5_to_lerobot.py --task_index $TASK_INDEX --data_root $DATASET_ROOT_DIR
+python scripts/convert_hdf5_to_lerobot.py --task_index $TASK_INDEX --data_root $DATASET_ROOT_DIR
 ```
-
 The GR00T-LeRobot-compatible datasets will be available in `DATASET_ROOT_DIR`.
+
 <pre>
 <code>
 📂 PhysicalAI-GR00T-Tuned-Tasks
-├── 📂 data
-├── 📂 meta
-└── 📂 videos
+├── exhaust_pipe_sorting_task.hdf5
+├── 📂 nut_pouring_task
+│   └── 📂 lerobot
+│       ├── 📂 data
+│       │   └── chunk-000
+│       ├── 📂 meta
+│       │   ├── episodes.jsonl
+│       │   ├── info.json
+│       │   ├── modality.json
+│       │   └── tasks.jsonl
+│       └── 📂videos
+│           └── chunk-000
+├── nut_pouring_task.hdf5
+└── README.md
 </code>
 </pre>
 
+#### Adapting to other embodiments & datasets
+
+During data collection, the lower body of the GR1 humanoid is fixed, and the upper body performs tabletop manipulation
+tasks. The ordered sets of joints observed in simulation ([i.e. robot states from Issac Lab](scripts/config/gr1/state_joint_space.yaml)) and commanded in simulation ([i.e. robot actions from Issac Lab](scripts/config/gr1/action_joint_space.yaml)) are included. During policy post-training and inference, only non-mimic joints in the upper body, i.e. arms and hands, are captured by the policy's observations and predictions. The ordered set of joints observed and commanded in policy ([i.e. robot joints from GR00T N1](scripts/config/gr00t/gr00t_joint_space.yaml)) are specified for data conversion remapping.
+
+GR00T-Lerobot schema also requires [additional metadata](https://github.com/NVIDIA/Isaac-GR00T/blob/main/getting_started/LeRobot_compatible_data_schema.md#meta). We include as them ([info.json](scripts/config/gr00t/info.json), [modality.json](scripts/config/gr00t/info.json)) as templates to faciliate conversion. If you are working with other embodiments and data configurations, please modify them accordingly.
+
+If you are interested in leveraging this tool for other tasks, please change the task metadata in `EvalTaskConfig' defined in the [configuration] (scripts/config/args.py). More manipulation tasks are coming soon!
+
 ### Post-training
 
-We finetuned the pre-trained [GR00T-N1-2B policy](https://huggingface.co/nvidia/GR00T-N1-2B) on thse two task-specific datasets. We provided the configurations with which we obtained the above checkpoints. With one node of H100s,
+We finetuned the pre-trained [GR00T-N1-2B policy](https://huggingface.co/nvidia/GR00T-N1-2B) on these two task-specific datasets. We provided the configurations with which we obtained the above checkpoints. With one node of H100s,
 
 ```bash
 python scripts/gr00t_finetune.py \
@@ -180,7 +219,7 @@ huggingface-cli login
 export CKPT="nvidia/GR00T-N1-2B-tuned-Nut-Pouring-task"
 # Or, to use the other checkpoint, uncomment the next line:
 # export CKPT="nvidia/GR00T-N1-2B-tuned-Exhaust-Pipe-Sorting"
-huggingface-cli download $CKPT
+huggingface-cli download --resume-download $CKPT --local-dir
 ```
 
 ## 📈 Policy Closed-loop Evaluation
