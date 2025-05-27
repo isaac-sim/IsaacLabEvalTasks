@@ -82,7 +82,7 @@ The task is defined as successful if following criteria has been met.
 ## 📦 Downloading Datasets (Optional)
 
 The finetuning datasets are generated with Synethic Manipulation Motion Generation (SMMG), utilizing tools including
-GR00T-Teleop, Mimic on Isaac Lab simulation environment. More details related to how datasets are generated could be viewed in [Isaac Lab](https://isaac-sim.github.io/IsaacLab/main/index.html).
+GR00T-Teleop, Mimic on Isaac Lab simulation environment. More details related to how datasets are generated could be viewed in [Isaac Lab Teleop & IL](https://isaac-sim.github.io/IsaacLab/main/source/overview/teleop_imitation.html).
 
 Datasets are hosted on Hugging Face as listed below.
 
@@ -172,7 +172,7 @@ tasks. The ordered sets of joints observed in simulation ([i.e. robot states fro
 
 GR00T-Lerobot schema also requires [additional metadata](https://github.com/NVIDIA/Isaac-GR00T/blob/main/getting_started/LeRobot_compatible_data_schema.md#meta). We include them ([info.json](scripts/config/gr00t/info.json), [modality.json](scripts/config/gr00t/info.json)) as templates to faciliate conversion. If you are working with other embodiments and data configurations, please modify them accordingly.
 
-If you are interested in leveraging this tool for other tasks, please change the task metadata in `EvalTaskConfig' defined in the [configuration] (scripts/config/args.py). More manipulation tasks are coming soon!
+If you are interested in leveraging this tool for other tasks, please change the task metadata in `EvalTaskConfig' defined in the [configuration](scripts/config/args.py). More manipulation tasks are coming soon!
 
 ### Post-training
 
@@ -315,7 +315,7 @@ We report the success rate of evaluating tuned GR00T N1 policy over 200 trials, 
 
 3. `rollout_length` impacts how many batched inference to make before task termination. Normally we set it between 20 to 30 for a faster turnaround.
 
-4. `num_envs` decides the number of environments to run in parallel. Increase it too much (e.g. >100 on RTX A6000 Ada) will significantly slow down the UI rendering. We recommend set between 10 to 30 for smooth rendering and efficient benchmarking.
+4. `num_envs` decides the number of environments to run in parallel. Too many parallel environments (e.g. >100 on RTX A6000 Ada) will significantly slow down the UI rendering. We recommend to set between 10 to 30 for smooth rendering and efficient benchmarking.
 
 ## Code formatting
 
