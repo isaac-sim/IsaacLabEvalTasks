@@ -18,16 +18,13 @@ It also provides benchmarking scripts for closed-loop evaluation of manipulation
 - Clone this repository separately from the Isaac Lab installation (i.e. outside the `IsaacLab` directory):
 
 ```bash
-# Option 1: HTTPS
-git clone --recurse-submodules https://github.com/isaac-sim/IsaacLabEvalTasks.git
-
-# Option 2: SSH
 git clone --recurse-submodules git@github.com:isaac-sim/IsaacLabEvalTasks.git
 ```
 
 - Using a python interpreter or conda/virtual env that has Isaac Lab installed, install the library required by [Isaac GR00T](https://github.com/NVIDIA/Isaac-GR00T)
 
 ```bash
+# Within IsaacLabEvalTasks directory
 cd submodules/Isaac-GR00T
 pip install --upgrade setuptools
 pip install -e .
@@ -35,7 +32,7 @@ pip install --no-build-isolation flash-attn==2.7.1.post4
 export PYTHONPATH=$PYTHONPATH:$INSTALL_DIR/IsaacLabEvalTasks/submodules/Isaac-GR00T
 ```
 
-- Verify that the GR00t deps are correctly installed by running the following command:
+- Verify that the GR00T deps are correctly installed by running the following command:
 
 ```bash
 python -c "import gr00t; print('gr00t imported successfully')"
@@ -44,6 +41,7 @@ python -c "import gr00t; print('gr00t imported successfully')"
 - Using a python interpreter or conda/virtual env that has Isaac Lab installed, install the library of Evaluation Tasks
 
 ```bash
+# Within IsaacLabEvalTasks directory
 python -m pip install -e source/isaaclab_eval_tasks
 ```
 
@@ -140,6 +138,8 @@ The process involved converting demonstration data (Mimic-generated motion traje
 export TASK_INDEX=0
 # Uncomment the below is Task is Exhaust Pipe Sorting
 # export TASK_INDEX=2
+
+# Within IsaacLabEvalTasks directory
 # data_root is directory of where Mimic-generated HDF5 is saved locally
 python scripts/convert_hdf5_to_lerobot.py --task_index $TASK_INDEX --data_root $DATASET_ROOT_DIR
 ```
@@ -179,6 +179,7 @@ If you are interested in leveraging this tool for other tasks, please change the
 We finetuned the pre-trained [GR00T-N1-2B policy](https://huggingface.co/nvidia/GR00T-N1-2B) on these two task-specific datasets. We provided the configurations with which we obtained the above checkpoints. With one node of H100s,
 
 ```bash
+# Within IsaacLabEvalTasks directory
 python scripts/gr00t_finetune.py \
     --dataset_path=${DATASET_PATH} \
     --output_dir=${OUTPUT_DIR} \
@@ -271,6 +272,7 @@ And the summary report as json file can be viewed as,
 To run parallel evaluation on the Nut Pouring task:
 
 ```bash
+# Within IsaacLabEvalTasks directory
 # export EVAL_RESULTS_FNAME="./eval_nutpouring.json"
 python scripts/evaluate_gn1.py \
     --num_feedback_actions 16 \
