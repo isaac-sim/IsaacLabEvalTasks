@@ -59,6 +59,14 @@ class Gr00tN1ClosedLoopArguments:
             )
         },
     )
+    record_camera: bool = field(
+        default=False,
+        metadata={"description": "Whether to record the camera images as videos during evaluation."},
+    )
+    record_video_output_path: str = field(
+        default="videos/",
+        metadata={"description": "Path to save the recorded videos."},
+    )
 
     # model specific parameters
     task_name: str = field(
@@ -68,7 +76,7 @@ class Gr00tN1ClosedLoopArguments:
     language_instruction: str = field(
         default="", metadata={"description": "Instruction given to the policy in natural language."}
     )
-    model_path: str = field(default="", metadata={"description": "Path to the tuned model checkpoint directory."})
+    model_path: str = field(default="", metadata={"description": "Full path to the tuned model checkpoint directory."})
     action_horizon: int = field(
         default=16, metadata={"description": "Number of actions in the policy's predictionhorizon."}
     )
@@ -164,7 +172,7 @@ class Gr00tN1ClosedLoopArguments:
         assert Path(self.gr00t_joints_config_path).exists(), "gr00t_joints_config_path does not exist"
         assert Path(self.action_joints_config_path).exists(), "action_joints_config_path does not exist"
         assert Path(self.state_joints_config_path).exists(), "state_joints_config_path does not exist"
-        assert Path(self.model_path).exists(), "model_path does not exist"
+        assert Path(self.model_path).exists(), "model_path does not exist. Do not use relative paths."
         # embodiment_tag
         assert self.embodiment_tag in [
             "gr1",
@@ -195,15 +203,32 @@ class Gr00tN1DatasetConfig:
         },
     )
     # Mimic-generated HDF5 datafield
-    state_name_sim: str = field(default="robot_joint_pos", metadata={"description": "Name of the state in the HDF5 file."})
-    action_name_sim: str = field(default="processed_actions", metadata={"description": "Name of the action in the HDF5 file."})
-    pov_cam_name_sim: str = field(default="robot_pov_cam", metadata={"description": "Name of the POV camera in the HDF5 file."})
+    state_name_sim: str = field(
+        default="robot_joint_pos", metadata={"description": "Name of the state in the HDF5 file."}
+    )
+    action_name_sim: str = field(
+        default="processed_actions", metadata={"description": "Name of the action in the HDF5 file."}
+    )
+    pov_cam_name_sim: str = field(
+        default="robot_pov_cam", metadata={"description": "Name of the POV camera in the HDF5 file."}
+    )
     # Gr00t-LeRobot datafield
-    state_name_lerobot: str = field(default="observation.state", metadata={"description": "Name of the state in the LeRobot file."})
-    action_name_lerobot: str = field(default="action", metadata={"description": "Name of the action in the LeRobot file."})
-    video_name_lerobot: str = field(default="observation.images.ego_view", metadata={"description": "Name of the video in the LeRobot file."})
-    task_description_lerobot: str = field(default="annotation.human.action.task_description", metadata={"description": "Name of the task description in the LeRobot file."})
-    valid_lerobot: str = field(default="annotation.human.action.valid", metadata={"description": "Name of the validity in the LeRobot file."})
+    state_name_lerobot: str = field(
+        default="observation.state", metadata={"description": "Name of the state in the LeRobot file."}
+    )
+    action_name_lerobot: str = field(
+        default="action", metadata={"description": "Name of the action in the LeRobot file."}
+    )
+    video_name_lerobot: str = field(
+        default="observation.images.ego_view", metadata={"description": "Name of the video in the LeRobot file."}
+    )
+    task_description_lerobot: str = field(
+        default="annotation.human.action.task_description",
+        metadata={"description": "Name of the task description in the LeRobot file."},
+    )
+    valid_lerobot: str = field(
+        default="annotation.human.action.valid", metadata={"description": "Name of the validity in the LeRobot file."}
+    )
 
     # Parquet
     chunks_size: int = field(default=1000, metadata={"description": "Number of episodes per data chunk."})

@@ -18,7 +18,9 @@ import json
 import numpy as np
 import yaml
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
+
+import cv2
 
 
 def dump_jsonl(data, file_path):
@@ -78,3 +80,30 @@ def load_gr1_joints_config(yaml_path: str | Path) -> Dict[str, Any]:
     with open(yaml_path, encoding="utf-8") as f:
         config = yaml.safe_load(f)
     return config.get("joints", {})
+
+
+class VideoWriter:
+    """
+    A class for writing videos from images.
+    """
+
+    def __init__(self, out_video_path: str, video_size: Tuple, fps: int = 20):
+        self.fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        self.fps = fps
+        self.video_size = video_size
+        self.writer = cv2.VideoWriter(out_video_path, self.fourcc, fps, video_size)
+        print(f"Writing video to: {out_video_path}")
+
+    def add_image(self, img):
+        # Permute to (BGR) and resize
+        img_bgr = img.squeeze()[:, :, [2, 1, 0]]
+        resized_img = cv2.resize(img_bgr.cpu().numpy(), self.video_size)
+        self.writer.write(resized_img)
+
+    def change_file_path(self, out_video_path: str):
+        self.writer.release()
+        self.writer = cv2.VideoWriter(out_video_path, self.fourcc, self.fps, self.video_size)
+        print(f"Writing video to: {out_video_path}")
+
+    def close(self):
+        self.writer.release()

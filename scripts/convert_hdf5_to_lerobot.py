@@ -108,7 +108,9 @@ def get_video_metadata(video_path: str) -> Dict[str, Any] | None:
         return None
 
 
-def get_feature_info(step_data: pd.DataFrame, video_paths: Dict[str, str], config: Gr00tN1DatasetConfig) -> Dict[str, Any]:
+def get_feature_info(
+    step_data: pd.DataFrame, video_paths: Dict[str, str], config: Gr00tN1DatasetConfig
+) -> Dict[str, Any]:
     """
     Get feature info from each  frame of the video.
 

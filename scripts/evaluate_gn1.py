@@ -12,16 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from isaacsim import SimulationApp
-from isaaclab.app import AppLauncher
+from isaacsim import SimulationApp  # noqa: F401 # isort: skip
+from isaaclab.app import AppLauncher  # noqa: F401 # isort: skip
 
 import contextlib
+import os
 import torch
 import tqdm
 from typing import Optional
 
 import tyro
+from io_utils import VideoWriter
 
 from config.args import Gr00tN1ClosedLoopArguments
 
@@ -63,10 +64,25 @@ def run_closed_loop_policy(
     # Disable terminations to avoid reset env
     env_cfg.terminations = {}
 
-    # create environment from loaded config
+    # Create environment from loaded config
     env = gym.make(args.task, cfg=env_cfg).unwrapped
     # Set seed
     env.seed(args.seed)
+
+    # Create camera video recorder
+    video_writer = None
+    # Only record the first environment if multiple envs are running in one episode
+    if args.record_camera:
+        video_count = 0
+        video_fpath = os.path.join(
+            args.record_video_output_path, f"{args.task_name}_{args.checkpoint_name}_{video_count}.mp4"
+        )
+        video_writer = VideoWriter(
+            video_fpath,
+            # Reverse the first two elements of the image size, height and width due to cv2
+            args.original_image_size[::-1][:2],
+            fps=20,
+        )
 
     with contextlib.suppress(KeyboardInterrupt) and torch.inference_mode():
         while simulation_app.is_running() and not simulation_app.is_exiting():
@@ -76,7 +92,7 @@ def run_closed_loop_policy(
             if evaluator is not None and evaluator.num_rollouts >= args.max_num_rollouts:
                 break
 
-            # reset environment
+            # Reset environment
             env.sim.reset()
             env.reset(seed=args.seed)
 
@@ -86,6 +102,11 @@ def run_closed_loop_policy(
             )
 
             ego_camera = env.scene["robot_pov_cam"]
+
+            if args.record_camera and video_writer is not None and os.path.exists(video_fpath):
+                # Replace the last part of the video file name with the video count
+                video_fpath = "_".join(video_fpath.split("_")[:-1]) + f"_{video_count}.mp4"
+                video_writer.change_file_path(video_fpath)
 
             for _ in tqdm.tqdm(range(args.rollout_length)):
                 robot_state_sim.set_joints_pos(robot.data.joint_pos)
@@ -101,6 +122,13 @@ def run_closed_loop_policy(
                     assert rollout_action[:, i, :].shape[0] == args.num_envs
                     env.step(rollout_action[:, i, :])
 
+                    if args.record_camera and video_writer is not None:
+                        # Only record the first environment if multiple envs are running
+                        video_writer.add_image(ego_camera.data.output["rgb"][0])
+
+            if args.record_camera and video_writer is not None:
+                video_count += 1
+
             # Check if rollout was successful
             if evaluator is not None:
                 evaluator.evaluate_step(env, succeess_term)
@@ -109,6 +137,8 @@ def run_closed_loop_policy(
     # Log evaluation results to a file
     if evaluator is not None:
         evaluator.maybe_write_eval_file()
+    if video_writer is not None:
+        video_writer.close()
     env.close()
 
 
