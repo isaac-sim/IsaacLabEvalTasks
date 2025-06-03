@@ -1,6 +1,7 @@
 # Isaac Lab Evaluation Tasks
 
-[![IsaacSim](https://img.shields.io/badge/IsaacSim-5.0.0-silver.svg)](https://docs.isaacsim.omniverse.nvidia.com/latest/index.html)
+[![Isaac Sim](https://img.shields.io/badge/IsaacSim-5.0.0-silver.svg)](https://docs.isaacsim.omniverse.nvidia.com/latest/index.html)
+[![Isaac Lab](https://img.shields.io/badge/IsaacLab-2.2.0-green.svg)](https://isaac-sim.github.io/IsaacLab/main/index.html)
 [![Python](https://img.shields.io/badge/python-3.11-blue.svg)](https://docs.python.org/3/whatsnew/3.11.html)
 [![Linux platform](https://img.shields.io/badge/platform-linux--64-orange.svg)](https://releases.ubuntu.com/20.04/)
 [![pre-commit](https://img.shields.io/github/actions/workflow/status/isaac-sim/IsaacLab/pre-commit.yaml?logo=pre-commit&logoColor=white&label=pre-commit&color=brightgreen)](https://github.com/isaac-sim/IsaacLab/actions/workflows/pre-commit.yaml)
@@ -9,9 +10,14 @@
 ##  📝 Overview
 
 This repository introduces two new industrial manipulation tasks designed in [Isaac Lab](https://isaac-sim.github.io/IsaacLab/main/index.html), enabling simulating and evaluating manipulation policies (e.g. [Isaac GR00T N1](https://github.com/NVIDIA/Isaac-GR00T)) using a humanoid robot. The tasks are designed to simulate realistic industrial scenarios, including Nut Pouring and Exhaust Pipe Sorting.
-It also provides benchmarking scripts for closed-loop evaluation of manipulation policy (i.e. Isaac GR00T N1) with post-trained checkpoints. These scripts enable developers to load prebuilt Issac Lab environments and industrial tasks—such as nut pouring and pipe sorting—and run standardized benchmarks to quantitatively assess policy performance.
+It also provides benchmarking scripts for closed-loop evaluation of manipulation policy (i.e. Isaac GR00T N1) with post-trained checkpoints. These scripts enable developers to load prebuilt Isaac Lab environments and industrial tasks—such as nut pouring and pipe sorting—and run standardized benchmarks to quantitatively assess policy performance.
 
 ## 📦 Installation
+
+Pre-requisites
+- For [Policy Closed-loop Evaluation](#-policy-closed-loop-evaluation), we have tested on Ubuntu 22.04, GPU: L40, RTX 4090 and A6000 Ada, and Python==3.11, CUDA version 12.8.
+- For [Policy Post Training](#post-training), see [GR00T-N1 pre-requisites](https://github.com/NVIDIA/Isaac-GR00T?tab=readme-ov-file#prerequisites)
+- Please make sure you have the following dependencies installed in your system: `ffmpeg`, `libsm6`, `libxext6`
 
 - Install Isaac Lab by following the [installation guide](https://isaac-sim.github.io/IsaacLab/main/source/setup/installation/index.html). We recommend using the conda installation as it simplifies calling Python scripts from the terminal.
 
@@ -97,6 +103,7 @@ Make sure you have registered your Hugging Face account and have read-access tok
 huggingface-cli login
 
 export DATASET="nvidia/PhysicalAI-GR00T-Tuned-Tasks"
+# Define the path to save the datasets as DATASET_ROOT_DIR
 huggingface-cli download --repo-type dataset --resume-download $DATASET  --local-dir $DATASET_ROOT_DIR
 
 ```
@@ -119,11 +126,11 @@ huggingface-cli download --repo-type dataset --resume-download $DATASET  --local
 </code>
 </pre>
 
-## 🤖 Isaac GR00T N1 Policy Post-Trainig (Optional)
+## 🤖 Isaac GR00T N1 Policy Post Trainig (Optional)
 
-[GR00T N1](https://github.com/NVIDIA/Isaac-GR00T?tab=readme-ov-file#nvidia-isaac-gr00t-n1) is a foundation model for generalized humanoid robot reasoning and skills, trained on an extensive multimodal dataset that includes real-world, synthetic, and internet-scale data. The model is designed for cross-embodiment generalization and can be efficiently adapted to new robot embodiments, tasks, and environments through post-training.
+[GR00T N1](https://github.com/NVIDIA/Isaac-GR00T?tab=readme-ov-file#nvidia-isaac-gr00t-n1) is a foundation model for generalized humanoid robot reasoning and skills, trained on an extensive multimodal dataset that includes real-world, synthetic, and internet-scale data. The model is designed for cross-embodiment generalization and can be efficiently adapted to new robot embodiments, tasks, and environments through post training.
 
-We followed the recommended GR00T N1 post-training workflow to adapt the model for the Fourier GR1 robot, targeting two industrial manipulation tasks: nut pouring and exhaust pipe sorting. The process involves multiple steps introduced below. You can also skip to the next section [Downloading Checkpoints](#downloading-checkpoints) to get post-trained checkpoints.
+We followed the recommended GR00T N1 post training workflow to adapt the model for the Fourier GR1 robot, targeting two industrial manipulation tasks: nut pouring and exhaust pipe sorting. The process involves multiple steps introduced below. You can also skip to the next section [Downloading Checkpoints](#downloading-checkpoints) to get post-trained checkpoints.
 
 ### Data Conversion
 
@@ -140,8 +147,7 @@ export TASK_INDEX=0
 # export TASK_INDEX=2
 
 # Within IsaacLabEvalTasks directory
-# data_root is directory of where Mimic-generated HDF5 is saved locally
-cd submodules/Isaac-GR00T
+# DATASET_ROOT_DIR is directory of where Mimic-generated HDF5 is saved locally
 python scripts/convert_hdf5_to_lerobot.py --task_index $TASK_INDEX --data_root $DATASET_ROOT_DIR
 ```
 The GR00T-LeRobot-compatible datasets will be available in `DATASET_ROOT_DIR`.
@@ -169,13 +175,13 @@ The GR00T-LeRobot-compatible datasets will be available in `DATASET_ROOT_DIR`.
 #### Adapting to other embodiments & datasets
 
 During data collection, the lower body of the GR1 humanoid is fixed, and the upper body performs tabletop manipulation
-tasks. The ordered sets of joints observed in simulation ([i.e. robot states from Issac Lab](scripts/config/gr1/state_joint_space.yaml)) and commanded in simulation ([i.e. robot actions from Issac Lab](scripts/config/gr1/action_joint_space.yaml)) are included. During policy post-training and inference, only non-mimic joints in the upper body, i.e. arms and hands, are captured by the policy's observations and predictions. The ordered set of joints observed and commanded in policy ([i.e. robot joints from GR00T N1](scripts/config/gr00t/gr00t_joint_space.yaml)) are specified for data conversion remapping.
+tasks. The ordered sets of joints observed in simulation ([i.e. robot states from Isaac Lab](scripts/config/gr1/state_joint_space.yaml)) and commanded in simulation ([i.e. robot actions from Isaac Lab](scripts/config/gr1/action_joint_space.yaml)) are included. During policy post training and inference, only non-mimic joints in the upper body, i.e. arms and hands, are captured by the policy's observations and predictions. The ordered set of joints observed and commanded in policy ([i.e. robot joints from GR00T N1](scripts/config/gr00t/gr00t_joint_space.yaml)) are specified for data conversion remapping.
 
 GR00T-Lerobot schema also requires [additional metadata](https://github.com/NVIDIA/Isaac-GR00T/blob/main/getting_started/LeRobot_compatible_data_schema.md#meta). We include them ([info.json](scripts/config/gr00t/info.json), [modality.json](scripts/config/gr00t/info.json)) as templates to facilitate conversion. If you are working with other embodiments and data configurations, please modify them accordingly.
 
 If you are interested in leveraging this tool for other tasks, please change the task metadata in `EvalTaskConfig' defined in the [configuration](scripts/config/args.py). More manipulation tasks are coming soon!
 
-### Post-training
+### Post Training
 
 We finetuned the pre-trained [GR00T-N1-2B policy](https://huggingface.co/nvidia/GR00T-N1-2B) on these two task-specific datasets. We provided the configurations with which we obtained the above checkpoints. With one node of H100s,
 
@@ -221,13 +227,14 @@ huggingface-cli login
 
 export CKPT="nvidia/GR00T-N1-2B-tuned-Nut-Pouring-task"
 # Or, to use the other checkpoint, uncomment the next line:
-# export CKPT="nvidia/GR00T-N1-2B-tuned-Exhaust-Pipe-Sorting"
-huggingface-cli download --resume-download $CKPT --local-dir
+# export CKPT="nvidia/GR00T-N1-2B-tuned-Exhaust-Pipe-Sorting-task"
+# Define the path to save the checkpoints as CKPT_LOCAL_DIR
+huggingface-cli download --resume-download $CKPT --local-dir $CKPT_LOCAL_DIR
 ```
 
 ## 📈 Policy Closed-loop Evaluation
 
-You can deploy the post-trained GR00T N1 policy for closed-loop control of the GR1 robot within an Issac Lab environment, and benchmark its success rate in parallel runs.
+You can deploy the post-trained GR00T N1 policy for closed-loop control of the GR1 robot within an Isaac Lab environment, and benchmark its success rate in parallel runs.
 
 ### Benchmarking Features
 
