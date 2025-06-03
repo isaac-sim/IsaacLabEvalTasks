@@ -14,6 +14,7 @@ It also provides benchmarking scripts for closed-loop evaluation of manipulation
 ## 📦 Installation
 
 Pre-requisites
+- This project is built on top of Isaac Lab 2.2.
 - For [Policy Closed-loop Evaluation](#-policy-closed-loop-evaluation), we have tested on Ubuntu 22.04, GPU: L40, RTX 4090 and A6000 Ada, and Python==3.11, CUDA version 12.8.
 - For [Policy Post Training](#post-training), see [GR00T-N1 pre-requisites](https://github.com/NVIDIA/Isaac-GR00T?tab=readme-ov-file#prerequisites)
 - Please make sure you have the following dependencies installed in your system: `ffmpeg`, `libsm6`, `libxext6`
