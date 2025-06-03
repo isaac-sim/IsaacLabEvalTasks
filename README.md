@@ -1,6 +1,7 @@
 # Isaac Lab Evaluation Tasks
 
-[![IsaacSim](https://img.shields.io/badge/IsaacSim-5.0.0-silver.svg)](https://docs.isaacsim.omniverse.nvidia.com/latest/index.html)
+[![Isaac Sim](https://img.shields.io/badge/IsaacSim-5.0.0-silver.svg)](https://docs.isaacsim.omniverse.nvidia.com/latest/index.html)
+[![Isaac Lab](https://img.shields.io/badge/IsaacLab-2.2.0-green.svg)](https://isaac-sim.github.io/IsaacLab/main/index.html)
 [![Python](https://img.shields.io/badge/python-3.11-blue.svg)](https://docs.python.org/3/whatsnew/3.11.html)
 [![Linux platform](https://img.shields.io/badge/platform-linux--64-orange.svg)](https://releases.ubuntu.com/20.04/)
 [![pre-commit](https://img.shields.io/github/actions/workflow/status/isaac-sim/IsaacLab/pre-commit.yaml?logo=pre-commit&logoColor=white&label=pre-commit&color=brightgreen)](https://github.com/isaac-sim/IsaacLab/actions/workflows/pre-commit.yaml)
@@ -14,7 +15,6 @@ It also provides benchmarking scripts for closed-loop evaluation of manipulation
 ## 📦 Installation
 
 Pre-requisites
-- This project is built on top of Isaac Lab 2.2.
 - For [Policy Closed-loop Evaluation](#-policy-closed-loop-evaluation), we have tested on Ubuntu 22.04, GPU: L40, RTX 4090 and A6000 Ada, and Python==3.11, CUDA version 12.8.
 - For [Policy Post Training](#post-training), see [GR00T-N1 pre-requisites](https://github.com/NVIDIA/Isaac-GR00T?tab=readme-ov-file#prerequisites)
 - Please make sure you have the following dependencies installed in your system: `ffmpeg`, `libsm6`, `libxext6`
