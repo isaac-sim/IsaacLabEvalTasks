@@ -29,20 +29,23 @@ class EvalTaskConfig(Enum):
             " the metallic measuring scale."
         ),
         "nut_pouring_task.hdf5",
+        0   # 1 is reserved for data validity check, following GR00T-N1 guidelines.
     )
     PIPESORTING = (
         "Isaac-ExhaustPipe-GR1T2-ClosedLoop-v0",
         "/home/gr00t/GR00T-N1-2B-tuned-Exhaust-Pipe-Sorting-task",
         "Pick up the blue pipe and place it into the blue bin.",
         "exhaust_pipe_sorting_task.hdf5",
+        2   # 1 is reserved for data validity check, following GR00T-N1 guidelines.
     )
 
-    def __init__(self, task: str, model_path: str, language_instruction: str, hdf5_name: str):
+    def __init__(self, task: str, model_path: str, language_instruction: str, hdf5_name: str, task_index: int):
         self.task = task
         self.model_path = model_path
         self.language_instruction = language_instruction
         self.hdf5_name = hdf5_name
-
+        assert task_index != 1, "task_index must not be 1. (Use 0 for nutpouring, 2 for exhaustpipe, etc.)"
+        self.task_index = task_index
 
 @dataclass
 class Gr00tN1ClosedLoopArguments:
@@ -194,14 +197,7 @@ class Gr00tN1DatasetConfig:
         default="", metadata={"description": "Instruction given to the policy in natural language."}
     )
     hdf5_name: str = field(default="", metadata={"description": "Name of the HDF5 file to use for the dataset."})
-    task_index: int = field(
-        default=0,
-        metadata={
-            "description": (
-                "Index of the task in the task list. Do not use 1. (E.g. 0 for nutpouring, 2 for exhaustpipe)."
-            )
-        },
-    )
+
     # Mimic-generated HDF5 datafield
     state_name_sim: str = field(
         default="robot_joint_pos", metadata={"description": "Name of the state in the HDF5 file."}
@@ -293,10 +289,9 @@ class Gr00tN1DatasetConfig:
 
     hdf5_file_path: Path = field(init=False)
     lerobot_data_dir: Path = field(init=False)
+    task_index: int = field(init=False)     # task index for the task description in LeRobot file
 
     def __post_init__(self):
-        # Reserve task_index 1 for the validity check field
-        assert self.task_index != 1, "task_index must not be 1. (Use 0 for nutpouring, 2 for exhaustpipe, etc.)"
 
         # Populate fields from enum based on task_name
         if self.task_name.upper() not in EvalTaskConfig.__members__:
@@ -304,6 +299,7 @@ class Gr00tN1DatasetConfig:
         config = EvalTaskConfig[self.task_name.upper()]
         self.language_instruction = config.language_instruction
         self.hdf5_name = config.hdf5_name
+        self.task_index = config.task_index
 
         self.hdf5_file_path = self.data_root / self.hdf5_name
         self.lerobot_data_dir = self.data_root / self.hdf5_name.replace(".hdf5", "") / "lerobot"
