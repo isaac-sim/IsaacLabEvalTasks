@@ -141,15 +141,15 @@ The process involved converting demonstration data (Mimic-generated motion traje
 - Using a python interpreter or conda/virtual env that has Isaac Lab, GR00T and Eavluation Tasks installed, convert Mimic-generated trajectories by
 
 ```bash
-# Example: Set `task_index` Based on Task
+# Example: Set `task_name` Based on Task
 # Nut Pouring
-export TASK_INDEX=0
-# Uncomment the below is Task is Exhaust Pipe Sorting
-# export TASK_INDEX=2
+export TASK_NAME="nutpouring"
+# Uncomment the below when Task is Exhaust Pipe Sorting
+# export TASK_NAME="pipesorting"
 
 # Within IsaacLabEvalTasks directory
 # DATASET_ROOT_DIR is directory of where Mimic-generated HDF5 is saved locally
-python scripts/convert_hdf5_to_lerobot.py --task_index $TASK_INDEX --data_root $DATASET_ROOT_DIR
+python scripts/convert_hdf5_to_lerobot.py --task_name $TASK_NAME--data_root $DATASET_ROOT_DIR
 ```
 
 The GR00T-LeRobot-compatible datasets will be available in `DATASET_ROOT_DIR`.
@@ -181,9 +181,7 @@ tasks. The ordered sets of joints observed in simulation ([i.e. robot states fro
 
 GR00T-Lerobot schema also requires [additional metadata](https://github.com/NVIDIA/Isaac-GR00T/blob/main/getting_started/LeRobot_compatible_data_schema.md#meta). We include them ([info.json](scripts/config/gr00t/info.json), [modality.json](scripts/config/gr00t/info.json)) as templates to facilitate conversion. If you are working with other embodiments and data configurations, please modify them accordingly.
 
-The `TASK_INDEX` is associated with the pre-defined task description in [`Gr00tN1DatasetConfig`](scripts/config/args.py) class, where 1 is reserved for data validity check, following GR00T-N1 guidelines. You may want to add other indices for your self-defined task.
-
-If you are interested in leveraging this tool for other tasks, please change the task metadata in `EvalTaskConfig' defined in the [configuration](scripts/config/args.py). More manipulation tasks are coming soon!
+If you are interested in leveraging this tool for other tasks, please change the task metadata in `EvalTaskConfig` defined in the [configuration](scripts/config/args.py). The `TASK_NAME` is associated with the pre-defined task description in [`Gr00tN1DatasetConfig`](scripts/config/args.py) class. The task_index indicates the index associated with language description, and 1 is reserved for data validity check, following GR00T-N1 guidelines. You may want to add other indices for your self-defined task. More manipulation tasks are coming soon!
 
 ### Post Training
 
