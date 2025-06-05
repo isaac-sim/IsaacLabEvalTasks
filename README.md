@@ -14,11 +14,12 @@ It also provides benchmarking scripts for closed-loop evaluation of manipulation
 
 ## 📦 Installation
 
-Pre-requisites
+### Pre-requisites
 - For [Policy Closed-loop Evaluation](#-policy-closed-loop-evaluation), we have tested on Ubuntu 22.04, GPU: L40, RTX 4090 and A6000 Ada, and Python==3.11, CUDA version 12.8.
 - For [Policy Post Training](#post-training), see [GR00T-N1 pre-requisites](https://github.com/NVIDIA/Isaac-GR00T?tab=readme-ov-file#prerequisites)
 - Please make sure you have the following dependencies installed in your system: `ffmpeg`, `libsm6`, `libxext6`
 
+### Setup Development Environment
 - Install Isaac Lab by following the [installation guide](https://isaac-sim.github.io/IsaacLab/main/source/setup/installation/index.html). We recommend using the conda installation as it simplifies calling Python scripts from the terminal.
 
 - Clone this repository separately from the Isaac Lab installation (i.e. outside the `IsaacLab` directory):
@@ -126,7 +127,7 @@ huggingface-cli download --repo-type dataset --resume-download $DATASET  --local
 </code>
 </pre>
 
-## 🤖 Isaac GR00T N1 Policy Post Trainig (Optional)
+## 🤖 Isaac GR00T N1 Policy Post Training (Optional)
 
 [GR00T N1](https://github.com/NVIDIA/Isaac-GR00T?tab=readme-ov-file#nvidia-isaac-gr00t-n1) is a foundation model for generalized humanoid robot reasoning and skills, trained on an extensive multimodal dataset that includes real-world, synthetic, and internet-scale data. The model is designed for cross-embodiment generalization and can be efficiently adapted to new robot embodiments, tasks, and environments through post training.
 
@@ -150,6 +151,7 @@ export TASK_INDEX=0
 # DATASET_ROOT_DIR is directory of where Mimic-generated HDF5 is saved locally
 python scripts/convert_hdf5_to_lerobot.py --task_index $TASK_INDEX --data_root $DATASET_ROOT_DIR
 ```
+
 The GR00T-LeRobot-compatible datasets will be available in `DATASET_ROOT_DIR`.
 
 <pre>
@@ -178,6 +180,8 @@ During data collection, the lower body of the GR1 humanoid is fixed, and the upp
 tasks. The ordered sets of joints observed in simulation ([i.e. robot states from Isaac Lab](scripts/config/gr1/state_joint_space.yaml)) and commanded in simulation ([i.e. robot actions from Isaac Lab](scripts/config/gr1/action_joint_space.yaml)) are included. During policy post training and inference, only non-mimic joints in the upper body, i.e. arms and hands, are captured by the policy's observations and predictions. The ordered set of joints observed and commanded in policy ([i.e. robot joints from GR00T N1](scripts/config/gr00t/gr00t_joint_space.yaml)) are specified for data conversion remapping.
 
 GR00T-Lerobot schema also requires [additional metadata](https://github.com/NVIDIA/Isaac-GR00T/blob/main/getting_started/LeRobot_compatible_data_schema.md#meta). We include them ([info.json](scripts/config/gr00t/info.json), [modality.json](scripts/config/gr00t/info.json)) as templates to facilitate conversion. If you are working with other embodiments and data configurations, please modify them accordingly.
+
+The `TASK_INDEX` is associated with the pre-defined task description in [`Gr00tN1DatasetConfig`](scripts/config/args.py) class, where 1 is reserved for data validity check, following GR00T-N1 guidelines. You may want to add other indices for your self-defined task.
 
 If you are interested in leveraging this tool for other tasks, please change the task metadata in `EvalTaskConfig' defined in the [configuration](scripts/config/args.py). More manipulation tasks are coming soon!
 
@@ -378,3 +382,6 @@ For rendering, please refer to the [Omniverse Developer Guideline](https://docs.
 set by `simulation_device` in evaluation.
 
 However, GR00T N1 policy only supports single-GPU inference (by May 2025). We have not tested on multi-GPU inference.
+
+## Contributing
+For more details, see [CONTRIBUTING.md](CONTIRBUTING.md)
