@@ -79,8 +79,8 @@ def run_closed_loop_policy(
         )
         video_writer = VideoWriter(
             video_fpath,
-            # Reverse the first two elements of the image size, height and width due to cv2
-            args.original_image_size[::-1][:2],
+            # Height, width
+            args.original_image_size[:2][::-1],
             fps=20,
         )
 
