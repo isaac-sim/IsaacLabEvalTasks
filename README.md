@@ -149,7 +149,7 @@ export TASK_NAME="nutpouring"
 
 # Within IsaacLabEvalTasks directory
 # DATASET_ROOT_DIR is directory of where Mimic-generated HDF5 is saved locally
-python scripts/convert_hdf5_to_lerobot.py --task_name $TASK_NAME--data_root $DATASET_ROOT_DIR
+python scripts/convert_hdf5_to_lerobot.py --task_name $TASK_NAME --data_root $DATASET_ROOT_DIR
 ```
 
 The GR00T-LeRobot-compatible datasets will be available in `DATASET_ROOT_DIR`.
@@ -190,6 +190,12 @@ We finetuned the pre-trained [GR00T-N1-2B policy](https://huggingface.co/nvidia/
 ```bash
 # Within IsaacLabEvalTasks directory
 cd submodules/Isaac-GR00T
+# Provide the directory where the GR00T-Lerobot data is stored as DATASET_PATH
+# Please use full path, instead of relative path
+# Nut pouring
+# E.g. export DATASET_PATH=/home/data/PhysicalAI-GR00T-Tuned-Tasks/nut_pouring_task/lerobot
+# Exhaust pipe sorting
+# E.g. export DATASET_PATH=/home/data/PhysicalAI-GR00T-Tuned-Tasks/Exhaust-Pipe-Sorting-task/lerobot
 python scripts/gr00t_finetune.py \
     --dataset_path=${DATASET_PATH} \
     --output_dir=${OUTPUT_DIR} \
