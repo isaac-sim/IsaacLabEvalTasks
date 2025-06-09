@@ -79,7 +79,7 @@ def run_closed_loop_policy(
         )
         video_writer = VideoWriter(
             video_fpath,
-            # Height, width
+            # Height, width to be in the order of (width, height) for cv2
             args.original_image_size[:2][::-1],
             fps=20,
         )
