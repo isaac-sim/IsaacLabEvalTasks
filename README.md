@@ -34,7 +34,7 @@ git clone --recurse-submodules git@github.com:isaac-sim/IsaacLabEvalTasks.git
 # Within IsaacLabEvalTasks directory
 cd submodules/Isaac-GR00T
 pip install --upgrade setuptools
-pip install -e .
+pip install -e .[base]
 pip install --no-build-isolation flash-attn==2.7.1.post4
 export PYTHONPATH=$PYTHONPATH:$INSTALL_DIR/IsaacLabEvalTasks/submodules/Isaac-GR00T
 ```
