@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import shutil
 from dataclasses import dataclass, field
 from enum import Enum
@@ -174,7 +175,9 @@ class Gr00tN1ClosedLoopArguments:
             self.model_path = config.model_path
         if self.language_instruction == "":
             self.language_instruction = config.language_instruction
-
+        # If model path is relative, return error
+        if not os.path.isabs(self.model_path):
+            raise ValueError("model_path must be an absolute path. Do not use relative paths.")
         assert (
             self.num_feedback_actions <= self.action_horizon
         ), "num_feedback_actions must be less than or equal to action_horizon"
@@ -182,7 +185,7 @@ class Gr00tN1ClosedLoopArguments:
         assert Path(self.gr00t_joints_config_path).exists(), "gr00t_joints_config_path does not exist"
         assert Path(self.action_joints_config_path).exists(), "action_joints_config_path does not exist"
         assert Path(self.state_joints_config_path).exists(), "state_joints_config_path does not exist"
-        assert Path(self.model_path).exists(), "model_path does not exist. Do not use relative paths."
+        assert Path(self.model_path).exists(), "model_path does not exist."
         # embodiment_tag
         assert self.embodiment_tag in [
             "gr1",
