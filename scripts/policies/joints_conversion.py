@@ -71,6 +71,8 @@ def remap_policy_joints_to_sim_joints(
                 joint_group = "left_hand"
             case "R":
                 joint_group = "right_hand"
+            case "head":
+                joint_group = "waist"
             case _:
                 continue
         if joint_name in policy_joints_config[joint_group]:

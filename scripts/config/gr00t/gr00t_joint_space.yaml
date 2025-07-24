@@ -42,3 +42,5 @@ joints:
     # - R_ring_intermediate_joint
     # - R_pinky_intermediate_joint
     # - R_thumb_distal_joint
+  waist:
+    - head_yaw_joint

@@ -97,6 +97,7 @@ class Gr00tN1Policy(PolicyBase):
             "state.right_arm": robot_state_policy["right_arm"].reshape(-1, 1, 7),  # numpy array of shape (N, 1, 7)
             "state.left_hand": robot_state_policy["left_hand"].reshape(-1, 1, 6),  # numpy array of shape (N, 1, 6)
             "state.right_hand": robot_state_policy["right_hand"].reshape(-1, 1, 6),  # numpy array of shape (N, 1, 6)
+            "state.waist": robot_state_policy["waist"].reshape(-1, 1, 1),  # numpy array of shape (N, 1, 1)
         }
         robot_action_policy = self.policy.get_action(observations)
 

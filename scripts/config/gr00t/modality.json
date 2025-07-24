@@ -10,15 +10,20 @@
             "start": 7,
             "end": 14
         },
-        "left_hand": {
+        "waist": {
             "original_key": "observation.state",
             "start": 14,
-            "end": 20
+            "end":15
+        },
+        "left_hand": {
+            "original_key": "observation.state",
+            "start": 15,
+            "end": 21
         },
         "right_hand": {
             "original_key": "observation.state",
-            "start": 20,
-            "end": 26
+            "start": 21,
+            "end": 27
         }
     },
     "action": {
@@ -37,6 +42,10 @@
         "right_hand": {
             "start": 20,
             "end": 26
+        },
+        "waist": {
+            "start": 26,
+            "end": 27
         }
     },
     "video": {
@@ -45,7 +54,7 @@
         }
     },
     "annotation": {
-        "human.action.task_description": {
+        "human.coarse_action": {
         },
         "human.validity": {
         }

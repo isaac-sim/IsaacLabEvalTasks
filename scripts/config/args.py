@@ -38,6 +38,13 @@ class EvalTaskConfig(Enum):
         "exhaust_pipe_sorting_task.hdf5",
         2   # 1 is reserved for data validity check, following GR00T-N1 guidelines.
     )
+    DRILLPNP = (
+        "Isaac-DrillPnP-GR1T2-ClosedLoop-v0",
+        "/home/datab/GR00T-N1-2B-tuned-Drill-PnP-task",
+        "Pick up the drill and place it into the open bin.",
+        "drill_pnp_task.hdf5",
+        3   # 1 is reserved for data validity check, following GR00T-N1 guidelines.
+    )
 
     def __init__(self, task: str, model_path: str, language_instruction: str, hdf5_name: str, task_index: int):
         self.task = task
@@ -305,9 +312,9 @@ class Gr00tN1DatasetConfig:
         self.lerobot_data_dir = self.data_root / self.hdf5_name.replace(".hdf5", "") / "lerobot"
 
         # Assert all paths exist
-        assert self.hdf5_file_path.exists(), "hdf5_file_path does not exist"
-        assert Path(self.gr00t_joints_config_path).exists(), "gr00t_joints_config_path does not exist"
-        assert Path(self.action_joints_config_path).exists(), "action_joints_config_path does not exist"
+        assert self.hdf5_file_path.exists(), f"hdf5_file_path {self.hdf5_file_path} does not exist"
+        assert Path(self.gr00t_joints_config_path).exists(), f"gr00t_joints_config_path {self.gr00t_joints_config_path} does not exist"
+        assert Path(self.action_joints_config_path).exists(), f"action_joints_config_path {self.action_joints_config_path} does not exist"
         assert Path(self.state_joints_config_path).exists(), "state_joints_config_path does not exist"
         assert Path(self.info_template_path).exists(), "info_template_path does not exist"
         assert Path(self.modality_template_path).exists(), "modality_template_path does not exist"
