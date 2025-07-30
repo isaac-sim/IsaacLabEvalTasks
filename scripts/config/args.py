@@ -40,7 +40,7 @@ class EvalTaskConfig(Enum):
         2   # 1 is reserved for data validity check, following GR00T-N1 guidelines.
     )
     DRILLPNP = (
-        "Isaac-DrillPnP-GR1T2-ClosedLoop-v0",
+        "Isaac-Galileo-GR1T2-Right-v0",
         "/home/datab/GR00T-N1-2B-tuned-Drill-PnP-task",
         "Pick up the drill and place it into the open bin.",
         "drill_pnp_task.hdf5",
@@ -216,7 +216,7 @@ class Gr00tN1DatasetConfig:
         default="processed_actions", metadata={"description": "Name of the action in the HDF5 file."}
     )
     pov_cam_name_sim: str = field(
-        default="robot_pov_cam", metadata={"description": "Name of the POV camera in the HDF5 file."}
+        default="robot_pov_cam_gr00t", metadata={"description": "Name of the POV camera in the HDF5 file."}
     )
     # Gr00t-LeRobot datafield
     state_name_lerobot: str = field(

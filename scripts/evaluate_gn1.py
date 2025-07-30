@@ -101,7 +101,7 @@ def run_closed_loop_policy(
                 robot.data.joint_pos, policy.gr1_state_joints_config, args.simulation_device
             )
 
-            ego_camera = env.scene["robot_pov_cam"]
+            ego_camera = env.scene["robot_pov_cam_groot"]
 
             if args.record_camera and video_writer is not None and os.path.exists(video_fpath):
                 # Replace the last part of the video file name with the video count

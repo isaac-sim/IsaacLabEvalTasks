@@ -50,6 +50,8 @@ class Gr00tN1Policy(PolicyBase):
 
         # Use the same data preprocessor as the loaded fine-tuned ckpts
         self.data_config = DATA_CONFIG_MAP[self.args.data_config]
+        # Add waist to the action keys
+        self.data_config.action_keys.append("action.waist")
 
         modality_config = self.data_config.modality_config()
         modality_transform = self.data_config.transform()
