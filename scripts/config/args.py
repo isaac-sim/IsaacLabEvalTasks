@@ -88,6 +88,8 @@ class Gr00tN1ClosedLoopArguments:
         default="", metadata={"description": "Instruction given to the policy in natural language."}
     )
     model_path: str = field(default="", metadata={"description": "Full path to the tuned model checkpoint directory."})
+    dataset_path: str = field(default="", metadata={"description": "Full path to the dataset directory."})
+    video_backend: str = field(default="decord", metadata={"description": "Video backend to use for training."})
     action_horizon: int = field(
         default=16, metadata={"description": "Number of actions in the policy's predictionhorizon."}
     )
@@ -103,7 +105,7 @@ class Gr00tN1ClosedLoopArguments:
         default=4, metadata={"description": "Number of denoising steps used in the policy inference."}
     )
     data_config: str = field(
-        default="gr1_arms_only", metadata={"description": "Name of the data configuration to use for the policy."}
+        default="gr1_arms_waist", metadata={"description": "Name of the data configuration to use for the policy."}
     )
     original_image_size: tuple[int, int, int] = field(
         default=(160, 256, 3), metadata={"description": "Original size of input images as (height, width, channels)."}
@@ -171,13 +173,17 @@ class Gr00tN1ClosedLoopArguments:
         config = EvalTaskConfig[self.task_name.upper()]
         if self.task == "":
             self.task = config.task
-        if self.model_path == "":
-            self.model_path = config.model_path
+        if self.dataset_path == "":
+            if self.model_path == "":
+                self.model_path = config.model_path
+            assert Path(self.model_path).exists(), "model_path does not exist."
+            # If model path is relative, return error
+            if not os.path.isabs(self.model_path):
+                raise ValueError("model_path must be an absolute path. Do not use relative paths.")
+        else:
+            assert Path(self.dataset_path).exists(), "dataset_path does not exist."
         if self.language_instruction == "":
             self.language_instruction = config.language_instruction
-        # If model path is relative, return error
-        if not os.path.isabs(self.model_path):
-            raise ValueError("model_path must be an absolute path. Do not use relative paths.")
         assert (
             self.num_feedback_actions <= self.action_horizon
         ), "num_feedback_actions must be less than or equal to action_horizon"
@@ -185,7 +191,6 @@ class Gr00tN1ClosedLoopArguments:
         assert Path(self.gr00t_joints_config_path).exists(), "gr00t_joints_config_path does not exist"
         assert Path(self.action_joints_config_path).exists(), "action_joints_config_path does not exist"
         assert Path(self.state_joints_config_path).exists(), "state_joints_config_path does not exist"
-        assert Path(self.model_path).exists(), "model_path does not exist."
         # embodiment_tag
         assert self.embodiment_tag in [
             "gr1",

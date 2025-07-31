@@ -45,6 +45,7 @@ import gymnasium as gym
 from closed_loop_policy import create_sim_environment
 from evaluators.gr00t_n1_evaluator import Gr00tN1Evaluator
 from policies.gr00t_n1_policy import Gr00tN1Policy
+from policies.gt_policy import GTPolicy
 from robot_joints import JointsAbsPosition
 
 from isaaclab.envs import ManagerBasedRLEnvCfg
@@ -108,6 +109,7 @@ def run_closed_loop_policy(
                 video_fpath = "_".join(video_fpath.split("_")[:-1]) + f"_{video_count}.mp4"
                 video_writer.change_file_path(video_fpath)
 
+            policy.reset()
             for _ in tqdm.tqdm(range(args.rollout_length)):
                 robot_state_sim.set_joints_pos(robot.data.joint_pos)
 
@@ -120,6 +122,7 @@ def run_closed_loop_policy(
                 # take only the first num_feedback_actions, the rest are ignored, preventing over memorization
                 for i in range(args.num_feedback_actions):
                     assert rollout_action[:, i, :].shape[0] == args.num_envs
+
                     env.step(rollout_action[:, i, :])
 
                     if args.record_camera and video_writer is not None:
@@ -146,7 +149,13 @@ if __name__ == "__main__":
     print("args", args)
 
     # model and environment related params
-    gr00t_n1_policy = Gr00tN1Policy(args)
+    if args.model_path == "":
+        assert args.dataset_path != ""
+        print("No model path, but dataset path, using GTPolicy")
+        gr00t_n1_policy = GTPolicy(args)
+    else:
+        print("model path, using Gr00tN1Policy")
+        gr00t_n1_policy = Gr00tN1Policy(args)
     env_cfg = create_sim_environment(args)
     evaluator = Gr00tN1Evaluator(args.checkpoint_name, args.eval_file_path, args.seed)
 

@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import os
+import numpy as np
 
 from gr00t.experiment.data_config import DATA_CONFIG_MAP
 from gr00t.model.policy import Gr00tPolicy
@@ -26,12 +27,14 @@ from robot_joints import JointsAbsPosition
 from isaaclab.sensors import Camera
 
 from config.args import Gr00tN1ClosedLoopArguments
+from gr00t.data.dataset import LeRobotSingleDataset
 
 
-class Gr00tN1Policy(PolicyBase):
+class GTPolicy(PolicyBase):
     def __init__(self, args: Gr00tN1ClosedLoopArguments):
         self.args = args
         self.policy = self._load_policy()
+        self.policy_iter = iter(self.policy)
         self._load_policy_joints_config()
         self._load_sim_joints_config()
 
@@ -46,21 +49,20 @@ class Gr00tN1Policy(PolicyBase):
 
     def _load_policy(self):
         """Load the policy from the model path."""
-        assert os.path.exists(self.args.model_path), f"Model path {self.args.model_path} does not exist"
+        assert os.path.exists(self.args.dataset_path), f"Dataset path {self.args.dataset_path} does not exist"
 
         # Use the same data preprocessor as the loaded fine-tuned ckpts
         self.data_config = DATA_CONFIG_MAP[self.args.data_config]
 
         modality_config = self.data_config.modality_config()
-        modality_transform = self.data_config.transform()
-        # load the policy
-        return Gr00tPolicy(
-            model_path=self.args.model_path,
-            modality_config=modality_config,
-            modality_transform=modality_transform,
+
+        return LeRobotSingleDataset(
+            dataset_path=self.args.dataset_path,
+            modality_configs=modality_config,
+            video_backend=self.args.video_backend,
+            video_backend_kwargs=None,
+            transforms=None,  # We'll handle transforms separately through the policy
             embodiment_tag=self.args.embodiment_tag,
-            denoising_steps=self.args.denoising_steps,
-            device=self.args.policy_device,
         )
 
     def step(self, current_state: JointsAbsPosition, camera: Camera) -> JointsAbsPosition:
@@ -81,33 +83,22 @@ class Gr00tN1Policy(PolicyBase):
         Returns:
             A dictionary containing the inferred action for robot joints.
         """
-        rgb = ego_camera.data.output["rgb"]
-        # Apply preprocessing to rgb
-        rgb = resize_frames_with_padding(
-            rgb, target_image_size=self.args.target_image_size, bgr_conversion=False, pad_img=True
-        )
-        # Retrieve joint positions as proprioceptive states and remap to policy joint orders
-        robot_state_policy = remap_sim_joints_to_policy_joints(current_state, self.gr00t_joints_config)
-
-        # Pack inputs to dictionary and run the inference
-        observations = {
-            "annotation.human.action.task_description": [language_instruction],  # list of strings
-            "video.ego_view": rgb.reshape(-1, 1, 256, 256, 3),  # numpy array of shape (N, 1, 256, 256, 3)
-            "state.left_arm": robot_state_policy["left_arm"].reshape(-1, 1, 7),  # numpy array of shape (N, 1, 7)
-            "state.right_arm": robot_state_policy["right_arm"].reshape(-1, 1, 7),  # numpy array of shape (N, 1, 7)
-            "state.left_hand": robot_state_policy["left_hand"].reshape(-1, 1, 6),  # numpy array of shape (N, 1, 6)
-            "state.right_hand": robot_state_policy["right_hand"].reshape(-1, 1, 6),  # numpy array of shape (N, 1, 6)
-            "state.waist": robot_state_policy["waist"].reshape(-1, 1, 1),  # numpy array of shape (N, 1, 1)
+        # data_point = self.policy.get_step_data(traj_id, step_count)
+        data_point = next(self.policy_iter)
+        actions = {
+            "action.left_arm": np.array(data_point["action.left_arm"])[None, ...],
+            "action.right_arm": np.array(data_point["action.right_arm"])[None, ...],
+            "action.left_hand": np.array(data_point["action.left_hand"])[None, ...],
+            "action.right_hand": np.array(data_point["action.right_hand"])[None, ...],
+            "action.waist": np.array(data_point["action.waist"])[None, ...],
         }
-        robot_action_policy = self.policy.get_action(observations)
-
         robot_action_sim = remap_policy_joints_to_sim_joints(
-            robot_action_policy, self.gr00t_joints_config, self.gr1_action_joints_config, self.args.simulation_device
+            actions, self.gr00t_joints_config, self.gr1_action_joints_config, self.args.simulation_device
         )
-
         return robot_action_sim
 
     def reset(self):
         """Resets the policy's internal state."""
         # As GN1 is a single-shot policy, we don't need to reset its internal state
+        self.policy_iter = iter(self.policy)
         pass
