@@ -1,42 +1,99 @@
 {
     "state": {
-        "left_arm": {
-            "original_key": "observation.state",
+        "left_leg": {
             "start": 0,
-            "end": 7
+            "end": 6,
+            "original_key": "observation.state"
         },
-        "right_arm": {
-            "original_key": "observation.state",
-            "start": 7,
-            "end": 14
+        "right_leg": {
+            "start": 6,
+            "end": 12,
+            "original_key": "observation.state"
+        },
+        "waist": {
+            "start": 12,
+            "end": 15,
+            "original_key": "observation.state"
+        },
+        "left_arm": {
+            "start": 15,
+            "end": 22,
+            "original_key": "observation.state"
         },
         "left_hand": {
-            "original_key": "observation.state",
-            "start": 14,
-            "end": 20
+            "start": 22,
+            "end": 29,
+            "original_key": "observation.state"
+        },
+        "right_arm": {
+            "start": 29,
+            "end": 36,
+            "original_key": "observation.state"
         },
         "right_hand": {
-            "original_key": "observation.state",
-            "start": 20,
-            "end": 26
+            "start": 36,
+            "end": 43,
+            "original_key": "observation.state"
+        },
+        "left_wrist_pose": {
+            "start": 0,
+            "end": 7,
+            "original_key": "observation.eef_state"
+        },
+        "right_wrist_pose": {
+            "start": 7,
+            "end": 14,
+            "original_key": "observation.eef_state"
         }
     },
     "action": {
-        "left_arm": {
+        "left_leg": {
             "start": 0,
-            "end": 7
+            "end": 6
         },
-        "right_arm": {
-            "start": 7,
-            "end": 14
+        "right_leg": {
+            "start": 6,
+            "end": 12
+        },
+        "waist": {
+            "start": 12,
+            "end": 15
+        },
+        "left_arm": {
+            "start": 15,
+            "end": 22
         },
         "left_hand": {
-            "start": 14,
-            "end": 20
+            "start": 22,
+            "end": 29
+        },
+        "right_arm": {
+            "start": 29,
+            "end": 36
         },
         "right_hand": {
-            "start": 20,
-            "end": 26
+            "start": 36,
+            "end": 43
+        },
+        "left_wrist_pose": {
+            "start": 0,
+            "end": 7,
+            "original_key": "action.eef"
+        },
+        "right_wrist_pose": {
+            "start": 7,
+            "end": 14,
+            "original_key": "action.eef"
+        },
+        "base_height_command": {
+            "start": 0,
+            "end": 1,
+            "original_key": "teleop.base_height_command"
+        },
+        "navigate_command": {
+            "start": 0,
+            "end": 3,
+            "original_key": "teleop.navigate_command"
         }
     },
     "video": {
@@ -45,9 +102,8 @@
         }
     },
     "annotation": {
-        "human.action.task_description": {
-        },
-        "human.validity": {
+        "human.task_description": {
+            "original_key": "task_index"
         }
     }
 }

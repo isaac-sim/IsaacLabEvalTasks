@@ -38,6 +38,13 @@ class EvalTaskConfig(Enum):
         "exhaust_pipe_sorting_task.hdf5",
         2   # 1 is reserved for data validity check, following GR00T-N1 guidelines.
     )
+    SQUATTINGPNPBOX = (
+        "Isaac-Box-G1-ClosedLoop-v0",
+        "/home/gr00t/GR00T-N1-2B-tuned-Squatting-Pnp-Box-task",
+        "Squat down, pick up the box and stand up.",
+        "squatting_pickplace_box_dataset_generated_1000_human_demos_3_v1_action_noise_005.hdf5",
+        3
+    )
 
     def __init__(self, task: str, model_path: str, language_instruction: str, hdf5_name: str, task_index: int):
         self.task = task
@@ -105,7 +112,7 @@ class Gr00tN1ClosedLoopArguments:
         metadata={"description": "Target size for images after resizing and padding as (height, width, channels)."},
     )
     gr00t_joints_config_path: Path = field(
-        default=Path(__file__).parent.resolve() / "gr00t" / "gr00t_joint_space.yaml",
+        default=Path(__file__).parent.resolve() / "gr1" / "gr00t_joint_space.yaml",
         metadata={"description": "Path to the YAML file specifying the joint ordering configuration for GR00T policy."},
     )
 
@@ -202,11 +209,29 @@ class Gr00tN1DatasetConfig:
     state_name_sim: str = field(
         default="robot_joint_pos", metadata={"description": "Name of the state in the HDF5 file."}
     )
+    left_eef_pos_name_sim: str = field(
+        default="left_eef_pos", metadata={"description": "Name of the left eef position in the HDF5 file."}
+    )
+    left_eef_quat_name_sim: str = field(
+        default="left_eef_quat", metadata={"description": "Name of the left eef quaternion in the HDF5 file."}
+    )
+    right_eef_pos_name_sim: str = field(
+        default="right_eef_pos", metadata={"description": "Name of the right eef position in the HDF5 file."}
+    )
+    right_eef_quat_name_sim: str = field(
+        default="right_eef_quat", metadata={"description": "Name of the right eef quaternion in the HDF5 file."}
+    )
+    teleop_base_height_command_name_sim: str = field(
+        default="base_height_cmd", metadata={"description": "Name of the teleop base height command in the HDF5 file."}
+    )
+    teleop_navigate_command_name_sim: str = field(
+        default="navigate_cmd", metadata={"description": "Name of the teleop navigate command in the HDF5 file."}
+    )
     action_name_sim: str = field(
         default="processed_actions", metadata={"description": "Name of the action in the HDF5 file."}
     )
     pov_cam_name_sim: str = field(
-        default="robot_pov_cam", metadata={"description": "Name of the POV camera in the HDF5 file."}
+        default="robot_head_cam", metadata={"description": "Name of the POV camera in the HDF5 file."}
     )
     # Gr00t-LeRobot datafield
     state_name_lerobot: str = field(
@@ -215,6 +240,10 @@ class Gr00tN1DatasetConfig:
     action_name_lerobot: str = field(
         default="action", metadata={"description": "Name of the action in the LeRobot file."}
     )
+    action_eef_name_sim: str = field(
+        default="action.eef", metadata={"description": "Name of the eef action in the HDF5 file."}
+    )
+
     video_name_lerobot: str = field(
         default="observation.images.ego_view", metadata={"description": "Name of the video in the LeRobot file."}
     )
@@ -229,7 +258,7 @@ class Gr00tN1DatasetConfig:
     # Parquet
     chunks_size: int = field(default=1000, metadata={"description": "Number of episodes per data chunk."})
     # mp4 video
-    fps: int = field(default=20, metadata={"description": "Frames per second for video recording."})
+    fps: int = field(default=50, metadata={"description": "Frames per second for video recording."})
     # Metadata files
     data_path: str = field(
         default="data/chunk-{episode_chunk:03d}/episode_{episode_index:06d}.parquet",
@@ -257,15 +286,15 @@ class Gr00tN1DatasetConfig:
     info_fname: str = field(default="info.json", metadata={"description": "Filename for the info JSON file."})
     # GR00T policy specific parameters
     gr00t_joints_config_path: Path = field(
-        default=Path(__file__).parent.resolve() / "gr00t" / "gr00t_joint_space.yaml",
+        default=Path(__file__).parent.resolve() / "g1" / "gr00t_43dof_joint_space.yaml",
         metadata={"description": "Path to the YAML file specifying the joint ordering configuration for GR00T policy."},
     )
     robot_type: str = field(
-        default="gr1_arms_only", metadata={"description": "Type of robot embodiment used in the policy fine-tuning."}
+        default="null", metadata={"description": "Type of robot embodiment used in the policy fine-tuning."}
     )
     # robot (GR1) simulation specific parameters
     action_joints_config_path: Path = field(
-        default=Path(__file__).parent.resolve() / "gr1" / "action_joint_space.yaml",
+        default=Path(__file__).parent.resolve() / "g1" / "43dof_joint_space.yaml",
         metadata={
             "description": (
                 "Path to the YAML file specifying the joint ordering configuration for GR1 action space in Lab."
@@ -273,7 +302,7 @@ class Gr00tN1DatasetConfig:
         },
     )
     state_joints_config_path: Path = field(
-        default=Path(__file__).parent.resolve() / "gr1" / "state_joint_space.yaml",
+        default=Path(__file__).parent.resolve() / "g1" / "43dof_joint_space.yaml",
         metadata={
             "description": (
                 "Path to the YAML file specifying the joint ordering configuration for GR1 state space in Lab."
@@ -281,10 +310,10 @@ class Gr00tN1DatasetConfig:
         },
     )
     original_image_size: tuple[int, int, int] = field(
-        default=(160, 256, 3), metadata={"description": "Original size of input images as (height, width, channels)."}
+        default=(480, 640, 3), metadata={"description": "Original size of input images as (height, width, channels)."}
     )
     target_image_size: tuple[int, int, int] = field(
-        default=(256, 256, 3), metadata={"description": "Target size for images after resizing and padding."}
+        default=(480, 640, 3), metadata={"description": "Target size for images after resizing and padding."}
     )
 
     hdf5_file_path: Path = field(init=False)
@@ -319,7 +348,14 @@ class Gr00tN1DatasetConfig:
         # Prepare data keys for mimic-generated hdf5 file
         self.hdf5_keys = {
             "state": self.state_name_sim,
+            "left_eef_pos": self.left_eef_pos_name_sim,
+            "left_eef_quat": self.left_eef_quat_name_sim,
+            "right_eef_pos": self.right_eef_pos_name_sim,
+            "right_eef_quat": self.right_eef_quat_name_sim,
             "action": self.action_name_sim,
+            "action_eef": self.action_eef_name_sim,
+            "teleop_base_height_command": self.teleop_base_height_command_name_sim,
+            "teleop_navigate_command": self.teleop_navigate_command_name_sim,
         }
         # Prepare data keys for LeRobot file
         self.lerobot_keys = {
@@ -328,6 +364,10 @@ class Gr00tN1DatasetConfig:
             "video": self.video_name_lerobot,
             "annotation": (
                 self.task_description_lerobot,
-                self.valid_lerobot,
+                # self.valid_lerobot,
             ),
+            "obs_eef_pose": "observation.eef_state",
+            "action_gn2_eef_pose": "action.eef",
+            "teleop_base_height_command": "teleop.base_height_command",
+            "teleop_navigate_command": "teleop.navigate_command",
         }

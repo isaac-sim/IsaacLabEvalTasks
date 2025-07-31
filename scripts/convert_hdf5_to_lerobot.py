@@ -23,6 +23,7 @@ import traceback
 from pathlib import Path
 from tqdm import tqdm
 from typing import Any, Dict
+import time
 
 import pandas as pd
 import torchvision
@@ -31,6 +32,7 @@ from io_utils import dump_json, dump_jsonl, load_gr1_joints_config, load_json
 from policies.image_conversion import resize_frames_with_padding
 from policies.joints_conversion import remap_sim_joints_to_policy_joints
 from robot_joints import JointsAbsPosition
+from robot_eef_pose import EefPose
 
 from config.args import Gr00tN1DatasetConfig
 
@@ -59,6 +61,8 @@ def get_video_metadata(video_path: str) -> Dict[str, Any] | None:
         video_path,
     ]
 
+    print("Video creation likely complete. Waiting a moment for file to stabilize...")
+    time.sleep(5)
     try:
         output = subprocess.check_output(cmd).decode("utf-8")
         probe_data = json.loads(output)
@@ -90,9 +94,12 @@ def get_video_metadata(video_path: str) -> Dict[str, Any] | None:
             "shape": [stream["height"], stream["width"], 3],  # Assuming 3 channels
             "names": ["height", "width", "channel"],
             "video_info": {
+                "video.width": stream["width"],
+                "video.height": stream["height"],
                 "video.fps": fps,
                 "video.codec": stream["codec_name"],
                 "video.pix_fmt": stream["pix_fmt"],
+                "video.channels": 3,
                 "video.is_depth_map": False,
                 "has_audio": has_audio,
             },
@@ -121,6 +128,13 @@ def get_feature_info(
     Returns:
         Dictionary containing feature information for each column and video.
     """
+    gr00t_joints_config = load_gr1_joints_config(config.gr00t_joints_config_path)
+    # flatten dict of dict into a single dict, perseving the order of the keys
+    gr00t_joints_names = []
+    for joint_group in gr00t_joints_config.keys():
+        print(joint_group, gr00t_joints_config[joint_group])
+        for joint_name in gr00t_joints_config[joint_group]:
+            gr00t_joints_names.append(joint_name)
     features = {}
     for video_key, video_path in video_paths.items():
         video_metadata = get_video_metadata(video_path)
@@ -140,7 +154,8 @@ def get_feature_info(
         # State & action
         if column in [config.lerobot_keys["state"], config.lerobot_keys["action"]]:
             dof = column_data.shape[1]
-            features[column]["names"] = [f"motor_{i}" for i in range(dof)]
+            assert dof == len(gr00t_joints_names)
+            features[column]["names"] = [f"{gr00t_joints_names[i]}" for i in range(dof)]
 
     return features
 
@@ -214,9 +229,10 @@ def write_video_job(queue: mp.Queue, error_queue: mp.Queue, config: Gr00tN1Datas
                 # Create parent directory if it doesn't exist
                 video_path.parent.mkdir(parents=True, exist_ok=True)
                 assert frames.shape[1:] == config.original_image_size, f"Frames shape is {frames.shape}"
-                frames = resize_frames_with_padding(
-                    frames, target_image_size=config.target_image_size, bgr_conversion=False, pad_img=True
-                )
+                if config.target_image_size != config.original_image_size:
+                    frames = resize_frames_with_padding(
+                        frames, target_image_size=config.target_image_size, bgr_conversion=False, pad_img=True
+                    )
                 # h264 codec encoding
                 torchvision.io.write_video(video_path, frames, fps, video_codec="h264")
 
@@ -252,11 +268,15 @@ def convert_trajectory_to_df(
     gr00t_joints_config = load_gr1_joints_config(config.gr00t_joints_config_path)
     action_joints_config = load_gr1_joints_config(config.action_joints_config_path)
     state_joints_config = load_gr1_joints_config(config.state_joints_config_path)
-
-    # 1. Get state, action, and timestamp
+    '''
+    **************************************************
+    Get joints state/action/timestamp from HDF5 file
+    **************************************************
+    '''
     length = None
     for key, hdf5_key_name in config.hdf5_keys.items():
-        assert key in ["state", "action"]
+        if key not in ["state", "action"]:
+            continue
         lerobot_key_name = config.lerobot_keys[key]
         if key == "state":
             joints = trajectory["obs"][hdf5_key_name]
@@ -280,12 +300,19 @@ def convert_trajectory_to_df(
         # 1.1. Remap the joints to the LeRobot joint orders
         joints = JointsAbsPosition.from_array(joints, input_joints_config, device="cpu")
         remapped_joints = remap_sim_joints_to_policy_joints(joints, gr00t_joints_config)
+
         # 1.2. Fill in the missing joints with zeros
         ordered_joints = []
         for joint_group in gr00t_modality_config[key].keys():
+            if joint_group == "left_wrist_pose" \
+                or joint_group == "right_wrist_pose" \
+                or joint_group == "base_height_command" \
+                or joint_group == "navigate_command":
+                continue
             num_joints = (
                 gr00t_modality_config[key][joint_group]["end"] - gr00t_modality_config[key][joint_group]["start"]
             )
+
             if joint_group not in remapped_joints.keys():
                 remapped_joints[joint_group] = np.zeros(
                     (joints.get_joints_pos().shape[0], num_joints), dtype=np.float64
@@ -294,19 +321,53 @@ def convert_trajectory_to_df(
                 assert remapped_joints[joint_group].shape[1] == num_joints
             ordered_joints.append(remapped_joints[joint_group])
 
+
         # 1.3. Concatenate the arrays for parquets
         concatenated = np.concatenate(ordered_joints, axis=1)
         data[lerobot_key_name] = [row for row in concatenated]
-
     assert len(data[config.lerobot_keys["action"]]) == len(data[config.lerobot_keys["state"]])
     length = len(data[config.lerobot_keys["action"]])
     data["timestamp"] = np.arange(length).astype(np.float64) * (1.0 / config.fps)
+
+    '''
+    **************************************************
+    Get eef pose for state/action from HDF5 file
+    **************************************************
+    '''
+    # obs
+    for key in ['obs', 'action_gn2']:
+        eef_pose = {}
+        for side in ['left', 'right']:
+            side_eef_pos = trajectory[key][config.hdf5_keys[f"{side}_eef_pos"]]
+            side_eef_quat = trajectory[key][config.hdf5_keys[f"{side}_eef_quat"]]
+
+            side_eef_pose = EefPose.from_array(side_eef_pos[:-1], side_eef_quat[:-1], device="cpu")
+            eef_pose[side] = side_eef_pose.get_eef_pose()
+
+        eef_pose = np.concatenate([eef_pose["left"].numpy(), eef_pose["right"].numpy()], axis=1).astype(np.float64)
+
+        assert eef_pose.shape == (length, 14), f"{eef_pose.shape} != ({length}, 14)"
+        lerobot_key_name = config.lerobot_keys[f"{key}_eef_pose"]
+
+        data[lerobot_key_name] = [row for row in eef_pose]
+
+    '''
+    **************************************************
+    Get teleop command for action from HDF5 file
+    **************************************************
+    '''
+    for teleop_key in ["teleop_base_height_command", "teleop_navigate_command"]:
+        teleop_command = trajectory["action_gn2"][config.hdf5_keys[teleop_key]][:-1]
+        assert len(teleop_command) == length
+        lerobot_key_name = config.lerobot_keys[f"{teleop_key}"]
+        data[lerobot_key_name] = [row for row in teleop_command]
+
     # 2. Get the annotation
     annotation_keys = config.lerobot_keys["annotation"]
     # task selection
     data[annotation_keys[0]] = np.ones(length, dtype=int) * config.task_index
     # valid is 1
-    data[annotation_keys[1]] = np.ones(length, dtype=int) * 1
+    # data[annotation_keys[1]] = np.ones(length, dtype=int) * 1
 
     # 3. Other data
     data["episode_index"] = np.ones(length, dtype=int) * episode_index
@@ -319,12 +380,14 @@ def convert_trajectory_to_df(
     done[-1] = True
     data["next.reward"] = reward
     data["next.done"] = done
+    data['observation.img_state_delta'] = np.zeros(length, dtype=np.float64)
 
     dataframe = pd.DataFrame(data)
 
     return_dict["data"] = dataframe
     return_dict["length"] = length
-    return_dict["annotation"] = set(data[annotation_keys[0]]) | set(data[annotation_keys[1]])
+    # return_dict["annotation"] = set(data[annotation_keys[0]]) | set(data[annotation_keys[1]])
+    return_dict["annotation"] = set(data[annotation_keys[0]])
     return return_dict
 
 
@@ -359,7 +422,8 @@ def convert_hdf5_to_lerobot(config: Gr00tN1DatasetConfig):
     lerobot_meta_dir = config.lerobot_data_dir / "meta"
     lerobot_meta_dir.mkdir(parents=True, exist_ok=True)
 
-    tasks = {1: "valid"}
+    # tasks = {1: "valid"}
+    tasks = {}
     tasks.update({config.task_index: f"{config.language_instruction}"})
 
     # 2. Generate data/
@@ -368,17 +432,20 @@ def convert_hdf5_to_lerobot(config: Gr00tN1DatasetConfig):
     video_paths = {}
 
     trajectory_ids = list(hdf5_data.keys())
+
     episodes_info = []
     for episode_index, trajectory_id in enumerate(tqdm(trajectory_ids)):
 
         try:
             trajectory = hdf5_data[trajectory_id]
+
             df_ret_dict = convert_trajectory_to_df(
                 trajectory=trajectory, episode_index=episode_index, index_start=total_length, config=config
             )
         except Exception as e:
             print(f"Error loading trajectory {trajectory_id}: {e}")
             continue
+
         # 2.1. Save the episode data
         dataframe = df_ret_dict["data"]
         episode_chunk = episode_index // config.chunks_size

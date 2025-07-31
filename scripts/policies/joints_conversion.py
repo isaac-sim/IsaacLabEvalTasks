@@ -30,6 +30,7 @@ def remap_sim_joints_to_policy_joints(
     assert isinstance(sim_joints_state, JointsAbsPosition)
     for group, joints_list in policy_joints_config.items():
         data[group] = []
+
         for joint_name in joints_list:
             if joint_name in sim_joints_state.joints_order_config:
                 joint_index = sim_joints_state.joints_order_config[joint_name]
@@ -38,6 +39,7 @@ def remap_sim_joints_to_policy_joints(
                 raise ValueError(f"Joint {joint_name} not found in {sim_joints_state.joints_order_config}")
 
         data[group] = np.stack(data[group], axis=1)
+        print(group, data[group].shape)
     return data
 
 
@@ -63,6 +65,7 @@ def remap_policy_joints_to_sim_joints(
     data = torch.zeros([policy_joint_shape[0], policy_joint_shape[1], len(sim_joints_config)], device=device)
     for joint_name, gr1_index in sim_joints_config.items():
         match joint_name.split("_")[0]:
+            # TODO: fix to g1
             case "left":
                 joint_group = "left_arm"
             case "right":
@@ -71,6 +74,8 @@ def remap_policy_joints_to_sim_joints(
                 joint_group = "left_hand"
             case "R":
                 joint_group = "right_hand"
+            case "waist":
+                joint_group = "waist"
             case _:
                 continue
         if joint_name in policy_joints_config[joint_group]:
