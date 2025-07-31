@@ -147,7 +147,7 @@ class Gr00tN1ClosedLoopArguments:
 
     # Evaluation parameters
     max_num_rollouts: int = field(
-        default=100, metadata={"description": "Maximum number of rollouts to perform during evaluation."}
+        default=1000, metadata={"description": "Maximum number of rollouts to perform during evaluation."}
     )
     checkpoint_name: str = field(
         default="gr00t-n1-2b-tuned", metadata={"description": "Name of the model checkpoint used for evaluation."}
@@ -163,7 +163,7 @@ class Gr00tN1ClosedLoopArguments:
             "description": "Number of feedback actions to execute per rollout (can be less than action_horizon)."
         },
     )
-    rollout_length: int = field(default=30, metadata={"description": "Number of steps in each rollout episode."})
+    rollout_length: int = field(default=300, metadata={"description": "Number of steps in each rollout episode."})
     seed: int = field(default=10, metadata={"description": "Random seed for reproducibility."})
 
     def __post_init__(self):

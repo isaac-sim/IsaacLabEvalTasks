@@ -113,7 +113,10 @@ def run_closed_loop_policy(
             for _ in tqdm.tqdm(range(args.rollout_length)):
                 robot_state_sim.set_joints_pos(robot.data.joint_pos)
 
-                robot_action_sim = policy.get_new_goal(robot_state_sim, ego_camera, args.language_instruction)
+                try:
+                    robot_action_sim = policy.get_new_goal(robot_state_sim, ego_camera, args.language_instruction)
+                except StopIteration:
+                    break
                 rollout_action = robot_action_sim.get_joints_pos(args.simulation_device)
 
                 # Number of joints from policy shall match the env action reqs
