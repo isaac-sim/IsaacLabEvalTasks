@@ -39,6 +39,13 @@ class EvalTaskConfig(Enum):
         "exhaust_pipe_sorting_task.hdf5",
         2   # 1 is reserved for data validity check, following GR00T-N1 guidelines.
     )
+    DRILLPNP = (
+        "Isaac-Galileo-GR1T2-Right-v0",
+        "/home/datab/GR00T-N1-2B-tuned-Drill-PnP-task",
+        "Pick up the drill and place it into the open bin.",
+        "drill_pnp_task.hdf5",
+        3   # 1 is reserved for data validity check, following GR00T-N1 guidelines.
+    )
 
     def __init__(self, task: str, model_path: str, language_instruction: str, hdf5_name: str, task_index: int):
         self.task = task
@@ -81,6 +88,8 @@ class Gr00tN1ClosedLoopArguments:
         default="", metadata={"description": "Instruction given to the policy in natural language."}
     )
     model_path: str = field(default="", metadata={"description": "Full path to the tuned model checkpoint directory."})
+    dataset_path: str = field(default="", metadata={"description": "Full path to the dataset directory."})
+    video_backend: str = field(default="decord", metadata={"description": "Video backend to use for training."})
     action_horizon: int = field(
         default=16, metadata={"description": "Number of actions in the policy's predictionhorizon."}
     )
@@ -96,7 +105,7 @@ class Gr00tN1ClosedLoopArguments:
         default=4, metadata={"description": "Number of denoising steps used in the policy inference."}
     )
     data_config: str = field(
-        default="gr1_arms_only", metadata={"description": "Name of the data configuration to use for the policy."}
+        default="gr1_arms_waist", metadata={"description": "Name of the data configuration to use for the policy."}
     )
     original_image_size: tuple[int, int, int] = field(
         default=(160, 256, 3), metadata={"description": "Original size of input images as (height, width, channels)."}
@@ -138,7 +147,7 @@ class Gr00tN1ClosedLoopArguments:
 
     # Evaluation parameters
     max_num_rollouts: int = field(
-        default=100, metadata={"description": "Maximum number of rollouts to perform during evaluation."}
+        default=1000, metadata={"description": "Maximum number of rollouts to perform during evaluation."}
     )
     checkpoint_name: str = field(
         default="gr00t-n1-2b-tuned", metadata={"description": "Name of the model checkpoint used for evaluation."}
@@ -154,7 +163,7 @@ class Gr00tN1ClosedLoopArguments:
             "description": "Number of feedback actions to execute per rollout (can be less than action_horizon)."
         },
     )
-    rollout_length: int = field(default=30, metadata={"description": "Number of steps in each rollout episode."})
+    rollout_length: int = field(default=300, metadata={"description": "Number of steps in each rollout episode."})
     seed: int = field(default=10, metadata={"description": "Random seed for reproducibility."})
 
     def __post_init__(self):
@@ -164,13 +173,17 @@ class Gr00tN1ClosedLoopArguments:
         config = EvalTaskConfig[self.task_name.upper()]
         if self.task == "":
             self.task = config.task
-        if self.model_path == "":
-            self.model_path = config.model_path
+        if self.dataset_path == "":
+            if self.model_path == "":
+                self.model_path = config.model_path
+            assert Path(self.model_path).exists(), "model_path does not exist."
+            # If model path is relative, return error
+            if not os.path.isabs(self.model_path):
+                raise ValueError("model_path must be an absolute path. Do not use relative paths.")
+        else:
+            assert Path(self.dataset_path).exists(), "dataset_path does not exist."
         if self.language_instruction == "":
             self.language_instruction = config.language_instruction
-        # If model path is relative, return error
-        if not os.path.isabs(self.model_path):
-            raise ValueError("model_path must be an absolute path. Do not use relative paths.")
         assert (
             self.num_feedback_actions <= self.action_horizon
         ), "num_feedback_actions must be less than or equal to action_horizon"
@@ -178,7 +191,6 @@ class Gr00tN1ClosedLoopArguments:
         assert Path(self.gr00t_joints_config_path).exists(), "gr00t_joints_config_path does not exist"
         assert Path(self.action_joints_config_path).exists(), "action_joints_config_path does not exist"
         assert Path(self.state_joints_config_path).exists(), "state_joints_config_path does not exist"
-        assert Path(self.model_path).exists(), "model_path does not exist."
         # embodiment_tag
         assert self.embodiment_tag in [
             "gr1",
@@ -209,7 +221,7 @@ class Gr00tN1DatasetConfig:
         default="processed_actions", metadata={"description": "Name of the action in the HDF5 file."}
     )
     pov_cam_name_sim: str = field(
-        default="robot_pov_cam", metadata={"description": "Name of the POV camera in the HDF5 file."}
+        default="robot_pov_cam_gr00t", metadata={"description": "Name of the POV camera in the HDF5 file."}
     )
     # Gr00t-LeRobot datafield
     state_name_lerobot: str = field(
@@ -308,9 +320,9 @@ class Gr00tN1DatasetConfig:
         self.lerobot_data_dir = self.data_root / self.hdf5_name.replace(".hdf5", "") / "lerobot"
 
         # Assert all paths exist
-        assert self.hdf5_file_path.exists(), "hdf5_file_path does not exist"
-        assert Path(self.gr00t_joints_config_path).exists(), "gr00t_joints_config_path does not exist"
-        assert Path(self.action_joints_config_path).exists(), "action_joints_config_path does not exist"
+        assert self.hdf5_file_path.exists(), f"hdf5_file_path {self.hdf5_file_path} does not exist"
+        assert Path(self.gr00t_joints_config_path).exists(), f"gr00t_joints_config_path {self.gr00t_joints_config_path} does not exist"
+        assert Path(self.action_joints_config_path).exists(), f"action_joints_config_path {self.action_joints_config_path} does not exist"
         assert Path(self.state_joints_config_path).exists(), "state_joints_config_path does not exist"
         assert Path(self.info_template_path).exists(), "info_template_path does not exist"
         assert Path(self.modality_template_path).exists(), "modality_template_path does not exist"
