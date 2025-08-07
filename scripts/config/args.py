@@ -43,7 +43,7 @@ class EvalTaskConfig(Enum):
         "Isaac-Galileo-GR1T2-Right-v0",
         "/home/datab/GR00T-N1-2B-tuned-Drill-PnP-task",
         "Pick up the drill and place it into the open bin.",
-        "drill_pnp_task.hdf5",
+        "galileo_gr1_100_demos_v4_gr00t_rerecord.hdf5",
         3   # 1 is reserved for data validity check, following GR00T-N1 guidelines.
     )
 

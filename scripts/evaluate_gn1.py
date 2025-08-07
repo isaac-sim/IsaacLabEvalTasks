@@ -95,7 +95,7 @@ def run_closed_loop_policy(
 
             # Reset environment
             env.sim.reset()
-            env.reset(seed=args.seed)
+            env.reset()
 
             robot = env.scene["robot"]
             robot_state_sim = JointsAbsPosition(
