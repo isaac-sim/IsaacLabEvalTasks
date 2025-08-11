@@ -23,6 +23,7 @@ import traceback
 from pathlib import Path
 from tqdm import tqdm
 from typing import Any, Dict
+import time
 
 import pandas as pd
 import torchvision
@@ -58,11 +59,14 @@ def get_video_metadata(video_path: str) -> Dict[str, Any] | None:
         "json",
         video_path,
     ]
+    print("Video creation likely complete. Waiting a moment for file to stabilize...")
+    time.sleep(2)
 
     try:
         output = subprocess.check_output(cmd).decode("utf-8")
         probe_data = json.loads(output)
         stream = probe_data["streams"][0]
+        print(f"Stream: {stream}")
 
         # Parse frame rate (comes as fraction like "15/1")
         num, den = map(int, stream["r_frame_rate"].split("/"))
@@ -409,6 +413,7 @@ def convert_hdf5_to_lerobot(config: Gr00tN1DatasetConfig):
         # remove last frame due to how Lab reports observations
         frames = frames[:-1]
         assert len(frames) == length
+        print(f"Putting video {new_video_path} in queue")
         queue.put((new_video_path, frames, config.fps, "image"))
 
         if example_data is None:
