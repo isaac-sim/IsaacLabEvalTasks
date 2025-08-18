@@ -46,6 +46,13 @@ class EvalTaskConfig(Enum):
         "galileo_gr1_100_demos_v4_gr00t_rerecord.hdf5",
         3   # 1 is reserved for data validity check, following GR00T-N1 guidelines.
     )
+    CONVEYOR = (
+        "Isaac-Conveyor-Belt-GR1T2-Right-v0",
+        "/home/datab/GR00T-N1-2B-tuned-Conveyor-Belt-PnP-task",
+        "Pick up the box and place it into the open bin.",
+        "conveyor_belt_gr1_merged_v2_20250818_rerecorded.hdf5",
+        4   # 1 is reserved for data validity check, following GR00T-N1 guidelines.
+    )
 
     def __init__(self, task: str, model_path: str, language_instruction: str, hdf5_name: str, task_index: int):
         self.task = task
