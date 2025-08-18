@@ -41,16 +41,16 @@ class EvalTaskConfig(Enum):
     )
     DRILLPNP = (
         "Isaac-Galileo-GR1T2-Right-v0",
-        "/home/datab/GR00T-N1-2B-tuned-Drill-PnP-task",
+        "abc",
         "Pick up the drill and place it into the open bin.",
-        "galileo_gr1_100_demos_v4_gr00t_rerecord.hdf5",
+        "abc.hdf5",
         3   # 1 is reserved for data validity check, following GR00T-N1 guidelines.
     )
     CONVEYOR = (
         "Isaac-Conveyor-Belt-GR1T2-Right-v0",
-        "/home/datab/GR00T-N1-2B-tuned-Conveyor-Belt-PnP-task",
+        "abc",
         "Pick up the box and place it into the open bin.",
-        "conveyor_belt_gr1_merged_v2_20250818_rerecorded.hdf5",
+        "abc.hdf5",
         4   # 1 is reserved for data validity check, following GR00T-N1 guidelines.
     )
 
@@ -115,10 +115,10 @@ class Gr00tN1ClosedLoopArguments:
         default="gr1_arms_waist", metadata={"description": "Name of the data configuration to use for the policy."}
     )
     original_image_size: tuple[int, int, int] = field(
-        default=(160, 256, 3), metadata={"description": "Original size of input images as (height, width, channels)."}
+        default=(512, 512, 3), metadata={"description": "Original size of input images as (height, width, channels)."}
     )
     target_image_size: tuple[int, int, int] = field(
-        default=(256, 256, 3),
+        default=(512, 512, 3),
         metadata={"description": "Target size for images after resizing and padding as (height, width, channels)."},
     )
     gr00t_joints_config_path: Path = field(
@@ -228,7 +228,7 @@ class Gr00tN1DatasetConfig:
         default="processed_actions", metadata={"description": "Name of the action in the HDF5 file."}
     )
     pov_cam_name_sim: str = field(
-        default="robot_pov_cam_gr00t", metadata={"description": "Name of the POV camera in the HDF5 file."}
+        default="robot_pov_cam", metadata={"description": "Name of the POV camera in the HDF5 file."}
     )
     # Gr00t-LeRobot datafield
     state_name_lerobot: str = field(
@@ -303,10 +303,10 @@ class Gr00tN1DatasetConfig:
         },
     )
     original_image_size: tuple[int, int, int] = field(
-        default=(160, 256, 3), metadata={"description": "Original size of input images as (height, width, channels)."}
+        default=(512, 512, 3), metadata={"description": "Original size of input images as (height, width, channels)."}
     )
     target_image_size: tuple[int, int, int] = field(
-        default=(256, 256, 3), metadata={"description": "Target size for images after resizing and padding."}
+        default=(512, 512, 3), metadata={"description": "Target size for images after resizing and padding."}
     )
 
     hdf5_file_path: Path = field(init=False)
@@ -320,11 +320,12 @@ class Gr00tN1DatasetConfig:
             raise ValueError(f"task_name must be one of: {', '.join(EvalTaskConfig.__members__.keys())}")
         config = EvalTaskConfig[self.task_name.upper()]
         self.language_instruction = config.language_instruction
-        self.hdf5_name = config.hdf5_name
+        if self.hdf5_name == "":
+            self.hdf5_name = config.hdf5_name
         self.task_index = config.task_index
 
         self.hdf5_file_path = self.data_root / self.hdf5_name
-        self.lerobot_data_dir = self.data_root / self.hdf5_name.replace(".hdf5", "") / "lerobot"
+        self.lerobot_data_dir = self.data_root / "lerobot"
 
         # Assert all paths exist
         assert self.hdf5_file_path.exists(), f"hdf5_file_path {self.hdf5_file_path} does not exist"
