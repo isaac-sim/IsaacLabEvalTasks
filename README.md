@@ -14,43 +14,7 @@ It also provides benchmarking scripts for closed-loop evaluation of manipulation
 
 ## 📦 Installation
 
-### Pre-requisites
-- For [Policy Closed-loop Evaluation](#-policy-closed-loop-evaluation), we have tested on Ubuntu 22.04, GPU: L40, RTX 4090 and A6000 Ada, and Python==3.11, CUDA version 12.8.
-- For [Policy Post Training](#post-training), see [GR00T-N1 pre-requisites](https://github.com/NVIDIA/Isaac-GR00T?tab=readme-ov-file#prerequisites)
-- Please make sure you have the following dependencies installed in your system: `ffmpeg`, `libsm6`, `libxext6`
-
-### Setup Development Environment
-- Install Isaac Lab by following the [installation guide](https://isaac-sim.github.io/IsaacLab/main/source/setup/installation/index.html). We recommend using the conda installation as it simplifies calling Python scripts from the terminal.
-
-- Clone this repository separately from the Isaac Lab installation (i.e. outside the `IsaacLab` directory):
-
-```bash
-git clone --recurse-submodules git@github.com:isaac-sim/IsaacLabEvalTasks.git
-```
-
-- Using a python interpreter or conda/virtual env that has Isaac Lab installed, install the library required by [Isaac GR00T N1](https://github.com/NVIDIA/Isaac-GR00T/tree/n1-release)
-
-```bash
-# Within IsaacLabEvalTasks directory
-cd submodules/Isaac-GR00T
-pip install --upgrade setuptools
-pip install -e .[base]
-pip install --no-build-isolation flash-attn==2.7.1.post4
-export PYTHONPATH=$PYTHONPATH:$INSTALL_DIR/IsaacLabEvalTasks/submodules/Isaac-GR00T
-```
-
-- Verify that the GR00T deps are correctly installed by running the following command:
-
-```bash
-python -c "import gr00t; print('gr00t imported successfully')"
-```
-
-- Using a python interpreter or conda/virtual env that has Isaac Lab installed, install the library of Evaluation Tasks
-
-```bash
-# Within IsaacLabEvalTasks directory
-python -m pip install -e source/isaaclab_eval_tasks
-```
+For detailed installation instructions, see [Installation Guide](doc/installation.md).
 
 ## 🛠️ Evaluation Tasks
 
@@ -86,257 +50,20 @@ The task is defined as successful if following criteria has been met.
 
 ## 📦 Downloading Datasets (Optional)
 
-The finetuning datasets are generated with Synethic Manipulation Motion Generation (SMMG), utilizing tools including
-GR00T-Teleop, Mimic on Isaac Lab simulation environment. More details related to how datasets are generated could be viewed in [Isaac Lab Teleop & IL](https://isaac-sim.github.io/IsaacLab/main/source/overview/teleop_imitation.html).
-
-Datasets are hosted on Hugging Face as listed below.
-
-[nvidia/PhysicalAI-GR00T-Tuned-Tasks: Nut Pouring](https://huggingface.co/datasets/nvidia/PhysicalAI-GR00T-Tuned-Tasks/tree/main/Nut-Pouring-task)
-
-[nvidia/PhysicalAI-GR00T-Tuned-Tasks: Exhaust-Pipe-Sorting](https://huggingface.co/datasets/nvidia/PhysicalAI-GR00T-Tuned-Tasks/tree/main/Exhaust-Pipe-Sorting-task)
-
-You can download the GR00T-Lerobot format dataset ready for post training, or the original Mimic-generated HDF5 for data conversion.
-
-Make sure you have registered your Hugging Face account and have read-access token ready.
-
-```bash
-# Provide your access token with read permission
-huggingface-cli login
-
-export DATASET="nvidia/PhysicalAI-GR00T-Tuned-Tasks"
-# Define the path to save the datasets as DATASET_ROOT_DIR
-huggingface-cli download --repo-type dataset --resume-download $DATASET  --local-dir $DATASET_ROOT_DIR
-
-```
-`DATASET_ROOT_DIR` is the path to the directory where you want to store those assets as below.
-
-<pre>
-<code>
-📂 PhysicalAI-GR00T-Tuned-Tasks
-├── 📂 Exhaust-Pipe-Sorting-task
-│   ├── 📂 data
-│   ├── 📂 meta
-│   └── 📂 videos
-├── exhaust_pipe_sorting_task.hdf5
-├── 📂 Nut-Pouring-task
-│   ├── 📂 data
-│   ├── 📂 meta
-│   └── 📂 videos
-├── nut_pouring_task.hdf5
-└── README.md
-</code>
-</pre>
+For dataset information and download instructions, see [Datasets Guide](doc/datasets.md).
 
 ## 🤖 Isaac GR00T N1 Policy Post Training (Optional)
 
-[GR00T N1](https://github.com/NVIDIA/Isaac-GR00T/tree/n1-release?tab=readme-ov-file#nvidia-isaac-gr00t-n1) is a foundation model for generalized humanoid robot reasoning and skills, trained on an extensive multimodal dataset that includes real-world, synthetic, and internet-scale data. The model is designed for cross-embodiment generalization and can be efficiently adapted to new robot embodiments, tasks, and environments through post training.
-
-We followed the recommended GR00T N1 post training workflow to adapt the model for the Fourier GR1 robot, targeting two industrial manipulation tasks: nut pouring and exhaust pipe sorting. The process involves multiple steps introduced below. You can also skip to the next section [Downloading Checkpoints](#downloading-checkpoints) to get post-trained checkpoints.
-
-### Data Conversion
-
-The process involved converting demonstration data (Mimic-generated motion trajectories in HDF5) into the LeRobot-compatible schema ([GR00T-Lerobot format guidelines](https://github.com/NVIDIA/Isaac-GR00T/blob/n1-release/getting_started/LeRobot_compatible_data_schema.md)).
-
-
-- Using a python interpreter or conda/virtual env that has Isaac Lab, GR00T and Eavluation Tasks installed, convert Mimic-generated trajectories by
-
-```bash
-# Example: Set `task_name` Based on Task
-# Nut Pouring
-export TASK_NAME="nutpouring"
-# Uncomment the below when Task is Exhaust Pipe Sorting
-# export TASK_NAME="pipesorting"
-
-# Within IsaacLabEvalTasks directory
-# DATASET_ROOT_DIR is directory of where Mimic-generated HDF5 is saved locally
-python scripts/convert_hdf5_to_lerobot.py --task_name $TASK_NAME --data_root $DATASET_ROOT_DIR
-```
-
-The GR00T-LeRobot-compatible datasets will be available in `DATASET_ROOT_DIR`.
-
-<pre>
-<code>
-📂 PhysicalAI-GR00T-Tuned-Tasks
-├── exhaust_pipe_sorting_task.hdf5
-├── 📂 nut_pouring_task
-│   └── 📂 lerobot
-│       ├── 📂 data
-│       │   └── chunk-000
-│       ├── 📂 meta
-│       │   ├── episodes.jsonl
-│       │   ├── info.json
-│       │   ├── modality.json
-│       │   └── tasks.jsonl
-│       └── 📂videos
-│           └── chunk-000
-├── nut_pouring_task.hdf5
-└── README.md
-</code>
-</pre>
-
-#### Adapting to other embodiments & datasets
-
-During data collection, the lower body of the GR1 humanoid is fixed, and the upper body performs tabletop manipulation
-tasks. The ordered sets of joints observed in simulation ([i.e. robot states from Isaac Lab](scripts/config/gr1/state_joint_space.yaml)) and commanded in simulation ([i.e. robot actions from Isaac Lab](scripts/config/gr1/action_joint_space.yaml)) are included. During policy post training and inference, only non-mimic joints in the upper body, i.e. arms and hands, are captured by the policy's observations and predictions. The ordered set of joints observed and commanded in policy ([i.e. robot joints from GR00T N1](scripts/config/gr00t/gr00t_joint_space.yaml)) are specified for data conversion remapping.
-
-GR00T-Lerobot schema also requires [additional metadata](https://github.com/NVIDIA/Isaac-GR00T/blob/n1-release/getting_started/LeRobot_compatible_data_schema.md#meta). We include them ([info.json](scripts/config/gr00t/info.json), [modality.json](scripts/config/gr00t/info.json)) as templates to facilitate conversion. If you are working with other embodiments and data configurations, please modify them accordingly.
-
-If you are interested in leveraging this tool for other tasks, please change the task metadata in `EvalTaskConfig` defined in the [configuration](scripts/config/args.py). The `TASK_NAME` is associated with the pre-defined task description in [`Gr00tN1DatasetConfig`](scripts/config/args.py) class. The task_index indicates the index associated with language description, and 1 is reserved for data validity check, following GR00T-N1 guidelines. You may want to add other indices for your self-defined task. More manipulation tasks are coming soon!
-
-### Post Training
-
-We finetuned the pre-trained [GR00T-N1-2B policy](https://huggingface.co/nvidia/GR00T-N1-2B) on these two task-specific datasets. We provided the configurations with which we obtained the above checkpoints. With one node of H100s,
-
-```bash
-# Within IsaacLabEvalTasks directory
-cd submodules/Isaac-GR00T
-# Provide the directory where the GR00T-Lerobot data is stored as DATASET_PATH
-# Please use full path, instead of relative path
-# Nut pouring
-# E.g. export DATASET_PATH=/home/data/PhysicalAI-GR00T-Tuned-Tasks/nut_pouring_task/lerobot
-# Exhaust pipe sorting
-# E.g. export DATASET_PATH=/home/data/PhysicalAI-GR00T-Tuned-Tasks/Exhaust-Pipe-Sorting-task/lerobot
-python scripts/gr00t_finetune.py \
-    --dataset_path=${DATASET_PATH} \
-    --output_dir=${OUTPUT_DIR} \
-    --data_config=gr1_arms_only \
-    --batch_size=96 \
-    --max_steps=20000 \
-    --num_gpus=8 \
-    --save_steps=5000 \
-    --base_model_path=nvidia/GR00T-N1-2B \
-    --no_tune_llm  \
-    --tune_visual \
-    --tune_projector \
-    --tune_diffusion_model \
-    --no-resume \
-    --dataloader_num_workers=16 \
-    --report_to=wandb \
-    --embodiment_tag=gr1
-```
-💡 **Tip:**
-
-1. Tuning with visual backend, action projector and diffusion model generally yields smaller trajectories errors (MSE), and higher closed-loop success rates.
-
-2. If you prefer tuning with less powerful GPUs, please follow the [reference guidelines](https://github.com/NVIDIA/Isaac-GR00T/tree/n1-release?tab=readme-ov-file#3-fine-tuning) about other finetuning options.
+For detailed post-training instructions including data conversion and model fine-tuning, see [Post Training Guide](doc/post-training.md).
 
 
 ## 📦 Downloading Checkpoints
 
-We post-trained the Isaac GR00T N1 policy using the above dataset, and the finetuned checkpoints are available to download.
-
-- [GR00T-N1-2B-tuned-Nut-Pouring-task](https://huggingface.co/nvidia/GR00T-N1-2B-tuned-Nut-Pouring-task)
-- [GR00T-N1-2B-tuned-Exhaust-Pipe-Sorting-task](https://huggingface.co/nvidia/GR00T-N1-2B-tuned-Exhaust-Pipe-Sorting-task)
-
-Make sure you have registered your Hugging Face account and have read-access token ready.
-```bash
-# Provide your access token with read permission
-huggingface-cli login
-
-export CKPT="nvidia/GR00T-N1-2B-tuned-Nut-Pouring-task"
-# Or, to use the other checkpoint, uncomment the next line:
-# export CKPT="nvidia/GR00T-N1-2B-tuned-Exhaust-Pipe-Sorting-task"
-# Define the path to save the checkpoints as CKPT_LOCAL_DIR
-huggingface-cli download --resume-download $CKPT --local-dir $CKPT_LOCAL_DIR
-```
+For information on available pre-trained checkpoints and download instructions, see [Checkpoints Guide](doc/checkpoints.md).
 
 ## 📈 Policy Closed-loop Evaluation
 
-You can deploy the post-trained GR00T N1 policy for closed-loop control of the GR1 robot within an Isaac Lab environment, and benchmark its success rate in parallel runs.
-
-### Benchmarking Features
-
-#### 🚀 Parallelized Evaluation:
-Isaac Lab supports parallelized environment instances for scalable benchmarking. Configure multiple parallel runs (e.g., 10–100 instances) to statistically quantify policy success rates under varying initial conditions.
-
-<table>
-  <tr>
-    <td align="center">
-      <img src="doc/gr-1_gn1_tuned_nut_pourin.gif" width="400"/><br>
-      <b>Nut Pouring</b>
-    </td>
-    <td align="center">
-      <img src="doc/gr-1_gn1_tuned_exhaust_pipe.gif" width="400"/><br>
-      <b>Exhaust Pipe Sorting</b>
-    </td>
-  </tr>
-</table>
-
-#### ✅ Success Metrics:
-- Task Completion: Binary success/failure based on object placement accuracy defined in the [evaluation tasks](#️-evaluation-tasks). Success rates are logged in the teriminal per episode as,
-
-```bash
-==================================================
-Successful trials: 9, out of 10 trials
-Success rate: 0.9
-==================================================
-```
-And the summary report as json file can be viewed as,
-<pre>
-{
-    "metadata": {
-        "checkpoint_name": "gr00t-n1-2b-tuned",
-        "seed": 10,
-        "date": "2025-05-20 16:42:54"
-    },
-    "summary": {
-        "successful_trials": 91,
-        "total_rollouts": 100,
-        "success_rate": 0.91
-    }
-</pre>
-
-To run parallel evaluation on the Nut Pouring task:
-
-```bash
-# Within IsaacLabEvalTasks directory
-# Assume the post-trained policy checkpoints are under CKPTS_PATH
-# Please use full path, instead of relative path for CKPTS_PATH
-# export EVAL_RESULTS_FNAME="./eval_nutpouring.json"
-python scripts/evaluate_gn1.py \
-    --num_feedback_actions 16 \
-    --num_envs 10 \
-    --task_name nutpouring \
-    --eval_file_path $EVAL_RESULTS_FNAME \
-    --model_path $CKPTS_PATH \
-    --rollout_length 30 \
-    --seed 10 \
-    --max_num_rollouts 100
-```
-
-To run parallel evaluation on the Exhaust Pipe Sorting task:
-
-```bash
-# Assume the post-trained policy checkpoints are under CKPTS_PATH
-# Please use full path, instead of relative path for CKPTS_PATH
-# export EVAL_RESULTS_FNAME="./eval_pipesorting.json"
-python scripts/evaluate_gn1.py \
-    --num_feedback_actions 16 \
-    --num_envs 10 \
-    --task_name pipesorting \
-    --eval_file_path $EVAL_RESULTS_FNAME \
-    --checkpoint_name gr00t-n1-2b-tuned-pipesorting \
-    --model_path $CKPTS_PATH \
-    --rollout_length 20 \
-    --seed 10 \
-    --max_num_rollouts 100
-```
-
-We report the success rate of evaluating tuned GR00T N1 policy over 200 trials, with random seed=15.
-
-| Evaluation Task      | SR       |
-|----------------------|----------|
-| Nut Pouring          | 91%      |
-| Exhaust Pipe Sorting | 95%      |
-
-💡 **Tip:**
-1. Hardware requirement: Please follow the system requirements in [Isaac Sim](https://docs.isaacsim.omniverse.nvidia.com/latest/installation/requirements.html#system-requirements) and [Isaac GR00T](https://github.com/NVIDIA/Isaac-GR00T/tree/n1-release?tab=readme-ov-file#3-fine-tuning) to choose. The above evaluation results was reported on RTX A6000 Ada, Ubuntu 22.04.
-
-2. `num_feedback_actions` determines the number of feedback actions to execute per inference, and it can be less than `action_horizon`. This option will impact the success rate of evaluation task even with the same checkpoint.
-
-3. `rollout_length` impacts how many batched inference to make before task termination. Normally we set it between 20 to 30 for a faster turnaround.
-
-4. `num_envs` decides the number of environments to run in parallel. Too many parallel environments (e.g. >100 on RTX A6000 Ada) will significantly slow down the UI rendering. We recommend to set between 10 to 30 for smooth rendering and efficient benchmarking.
+For detailed evaluation instructions including benchmarking features and performance results, see [Evaluation Guide](doc/evaluation.md).
 
 ## Code formatting
 
@@ -355,37 +82,7 @@ pre-commit run --all-files
 
 ## Troubleshooting
 
-#### Pip package version mismatch
-
-If you observe any of the following during [installation of GR00T](#-installation), you can ignore those errors.
-The GR00T policy runs on an older version of torch library with flash attention, and all other tools in this repository do not require
-torch>=2.7. Thus we downgrade the torch and related software to support GR00T inference. Mimic-related data generation workflows are not impacted.
-<pre>
-ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
-isaaclab 0.37.2 requires trimesh, which is not installed.
-dex-retargeting 0.4.6 requires lxml>=5.2.2, which is not installed.
-dex-retargeting 0.4.6 requires trimesh>=4.4.0, which is not installed.
-isaaclab-tasks 0.10.31 requires torch>=2.7, but you have torch 2.5.1 which is incompatible.
-isaacsim-kernel 5.0.0 requires wrapt==1.16.0, but you have wrapt 1.14.1 which is incompatible.
-isaaclab-rl 0.2.0 requires pillow==11.0.0, but you have pillow 11.2.1 which is incompatible.
-isaaclab-rl 0.2.0 requires torch>=2.7, but you have torch 2.5.1 which is incompatible.
-isaaclab 0.37.2 requires pillow==11.0.0, but you have pillow 11.2.1 which is incompatible.
-isaaclab 0.37.2 requires starlette==0.46.0, but you have starlette 0.45.3 which is incompatible.
-isaaclab 0.37.2 requires torch>=2.7, but you have torch 2.5.1 which is incompatible.
-isaacsim-core 5.0.0 requires torch==2.7.0, but you have torch 2.5.1 which is incompatible.
-</pre>
-
-#### Running on Blackwell GPUs
-
-Unfortunately, due to limited support of flash attention module (by May 2025), GR00T policy can only support running on non-Blackwell GPUs. However
-you can run Mimic-related data generation workflows and GR00T-Lerobot data conversion on Blackwell. Blackwell support is coming soon.
-
-#### Running evaluation on Multiple GPUs
-
-For rendering, please refer to the [Omniverse Developer Guideline](https://docs.omniverse.nvidia.com/dev-guide/latest/linux-troubleshooting.html#q9-how-to-specify-what-gpus-to-run-omniverse-apps-on) for setting single-gpu mode or multi-gpu mode of Isaac Sim. For physics, we suggest to the evaluation to run on CPU
-set by `simulation_device` in evaluation.
-
-However, GR00T N1 policy only supports single-GPU inference (by May 2025). We have not tested on multi-GPU inference.
+For common issues and solutions, see [Troubleshooting Guide](doc/troubleshooting.md).
 
 ## Contributing
 For more details, see [CONTRIBUTING.md](CONTIRBUTING.md)
